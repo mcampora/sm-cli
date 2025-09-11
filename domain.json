@@ -1,0 +1,30 @@
+{
+    "name": "marc_test",
+    "domainExecutionRole": "arn:aws:iam::555456986422:role/service-role/AmazonSageMakerDomainExecution",
+    "serviceRole": "arn:aws:iam::555456986422:role/service-role/AmazonSageMakerDomainService",
+    "identitycenter": "arn:aws:sso:::instance/ssoins-72232c91e3753275",
+    "owner": "mcampora@ebsco.com",
+    "tags": {
+        "owner": "mcampora@ebsco.com"
+    },
+    "domainUnits": [
+        {
+            "name": "A", 
+            "owner": "mcampora@ebsco.com",
+            "children": [
+                {
+                    "name": "A1", 
+                    "owner": "mcampora@ebsco.com"
+                },
+                {
+                    "name": "A2", 
+                    "owner": "mcampora@ebsco.com"
+                }
+            ]
+        },
+        {
+            "name": "B", 
+            "owner": "mcampora@ebsco.com"
+        }
+    ]
+}

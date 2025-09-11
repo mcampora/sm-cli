@@ -1,0 +1,65 @@
+[
+    {
+        "awsAccount": {
+            "awsAccountId": "${ACCOUNT_ID}"
+        },
+        "awsRegion": {
+            "regionName": "${AWS_REGION}"
+        },
+        "deploymentMode": "ON_CREATE",
+        "deploymentOrder": 0,
+        "description": "Configuration for the Tooling",
+        "environmentBlueprintId": "${TOOLING_ID}",
+        "name": "Tooling"
+    },
+    {
+        "awsAccount": {
+            "awsAccountId": "${ACCOUNT_ID}"
+        },
+        "awsRegion": {
+            "regionName": "${AWS_REGION}"
+        },
+        "deploymentMode": "ON_CREATE",
+        "deploymentOrder": 1,
+        "description": "Creates databases in Amazon SageMaker Lakehouse for storing tables in S3 and Amazon Athena resources for your SQL workloads",
+        "environmentBlueprintId": "${DATALAKE_ID}",
+        "name": "Lakehouse Database"
+    },
+    {
+        "awsAccount": {
+            "awsAccountId": "${ACCOUNT_ID}"
+        },
+        "awsRegion": {
+            "regionName": "${AWS_REGION}"
+        },
+        "deploymentMode": "ON_CREATE",
+        "deploymentOrder": 1,
+        "description": "Creates an Amazon Redshift Serverless workgroup for your SQL workloads",
+        "environmentBlueprintId": "${REDSHIFT_SERVERLESS_ID}",
+        "name": "Redshift Serverless"
+    },
+    {
+        "awsAccount": {
+            "awsAccountId": "${ACCOUNT_ID}"
+        },
+        "awsRegion": {
+            "regionName": "${AWS_REGION}"
+        },
+        "deploymentMode": "ON_DEMAND",
+        "description": "Enables you to create an additional Amazon Redshift Serverless workgroup for your SQL workloads",
+        "environmentBlueprintId": "${REDSHIFT_SERVERLESS_ID}",
+        "name": "OnDemand RedshiftServerless"
+    },
+    {
+        "awsAccount": {
+            "awsAccountId": "${ACCOUNT_ID}"
+        },
+        "awsRegion": {
+            "regionName": "${AWS_REGION}"
+        },
+        "deploymentMode": "ON_DEMAND",
+        "description": "Enables you to create additional catalogs in Amazon SageMaker Lakehouse for storing data in Redshift Managed Storage",
+        "environmentBlueprintId": "${REDSHIFT_CATALOG_ID}",
+        "name": "OnDemand Catalog for Redshift Managed Storage"
+    }
+]
