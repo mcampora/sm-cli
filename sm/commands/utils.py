@@ -17,6 +17,13 @@ def get_domain_id(domain_name, domain_id) -> str:
     return domain_id
 
 
+def get_account_details(account):
+    session = boto3.Session(profile_name=account)
+    sts = session.client('sts')
+    identity = sts.get_caller_identity()
+    return identity
+
+
 def get_resource_shares(domain_id):
     """Get the resource shares for a specific DataZone domain."""
     result = []

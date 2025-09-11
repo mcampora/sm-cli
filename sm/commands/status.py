@@ -3,14 +3,14 @@ import boto3
 import os
 
 @click.command()
-@click.option('--profile', 'profile', required=False, help='The profile to use for AWS credentials')
-def status(profile):
+@click.option('--account', 'account', required=False, help='The profile to use for AWS credentials')
+def status(account):
     """Check AWS connection status."""
     try:
         click.echo("Checking AWS connection status...")
-        if not profile:
-            profile = "default"
-        session = boto3.Session(profile_name=profile)
+        if not account:
+            account = "default"
+        session = boto3.Session(profile_name=account)
         sts = session.client('sts')
         identity = sts.get_caller_identity()
         click.echo("✅ Successfully connected to AWS")

@@ -42,8 +42,8 @@ def get_project_profile(environment):
 @click.option('--description', default='', help='Description of the project')
 @click.option('--environment', type=click.Choice(['dev', 'test', 'prod'], case_sensitive=False), 
               default='dev', help='Environment for the project (dev/test/prod)')
-@click.option('--profile', default='default', help='AWS profile to use')
-def create_project(domain_id, domain_name, name, description, environment, profile):
+@click.option('--account', default='default', help='AWS account profile to use')
+def create_project(domain_id, domain_name, name, description, environment, account):
     """Create a new project in the specified domain.
     
     Example:
@@ -51,8 +51,8 @@ def create_project(domain_id, domain_name, name, description, environment, profi
         sm create-project --domain-id dzd_xxxxxxxxx --name my-project --environment test
     """
     try:
-        # Set the AWS profile
-        boto3.setup_default_session(profile_name=profile)
+        # Set the AWS account profile
+        boto3.setup_default_session(profile_name=account)
         
         # Get the domain ID
         domain_id = get_domain_id(domain_name, domain_id)

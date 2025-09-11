@@ -4,7 +4,7 @@ import boto3
 from botocore.exceptions import ClientError
 import json
 from dotenv import load_dotenv
-from sm.commands.utils import get_domain_id, delete_resource_shares, get_resource_shares
+from sm.commands.utils import get_domain_id, delete_resource_shares, get_resource_shares, get_account_details
 import time
 
 @click.command()
@@ -28,16 +28,9 @@ def list_accounts(domain_id, domain_name):
         click.get_current_context().exit(1)
 
 
-def get_profile_details(profile):
-    session = boto3.Session(profile_name=profile)
-    sts = session.client('sts')
-    identity = sts.get_caller_identity()
-    return identity
-
-
-def create_role(profile, name, trust_policy, managed_policies):
+def create_role(account, name, trust_policy, managed_policies):
     arn = None
-    session = boto3.Session(profile_name=profile)
+    session = boto3.Session(profile_name=account)
     iam = session.client('iam')
     try:
         res = iam.get_role(RoleName=name)
@@ -58,7 +51,7 @@ def create_role(profile, name, trust_policy, managed_policies):
     return arn
 
 
-def create_access_role(profile, region, account_id, domain_id):
+def create_access_role(account, region, account_id, domain_id):
     name = f"AmazonSageMakerManageAccess-{region}-{domain_id}"
     trust_policy = {
         "Version": "2012-10-17", 
@@ -85,10 +78,10 @@ def create_access_role(profile, region, account_id, domain_id):
         "arn:aws:iam::aws:policy/AmazonDataZoneSageMakerManageAccessRolePolicy",
         "arn:aws:iam::aws:policy/service-role/AmazonDataZoneRedshiftManageAccessRolePolicy" 
     ]
-    return create_role(profile, name, trust_policy, managed_policies)
+    return create_role(account, name, trust_policy, managed_policies)
 
 
-def create_provisioning_role(profile, account_id):
+def create_provisioning_role(account, account_id):
     name = f"AmazonSageMakerProvisioning-{account_id}"
     trust_policy = { 
         "Version": "2012-10-17", 
@@ -108,7 +101,7 @@ def create_provisioning_role(profile, account_id):
         ]
     }
     managed_policies = [ "arn:aws:iam::aws:policy/service-role/SageMakerStudioProjectProvisioningRolePolicy" ]
-    return create_role(profile, name, trust_policy, managed_policies)
+    return create_role(account, name, trust_policy, managed_policies)
             
 
 def put_environment_blueprint_configuration(datazone, domain_id, blueprint_id, region, access_role_arn, provisioning_role_arn):
@@ -134,8 +127,8 @@ def add_policy_grant(datazone, domain_id, invitee_account_id, blueprint_id):
     )   
 
 
-def configure_workflow_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn):
-    session = boto3.Session(profile_name=profile, region_name=region)
+def configure_workflow_blueprint(account, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn):
+    session = boto3.Session(profile_name=account, region_name=region)
     datazone = session.client('datazone')
     workflow_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='Workflow')['items'][0]['id']
     put_environment_blueprint_configuration(datazone, domain_id, workflow_id, region, access_role_arn, provisioning_role_arn)
@@ -143,17 +136,17 @@ def configure_workflow_blueprint(profile, invitee_account_id, domain_id, region,
     click.echo(f"    ✅ Configured Workflow blueprint {workflow_id}.")
 
 
-def configure_datalake_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn):
-    session = boto3.Session(profile_name=profile, region_name=region)
+def configure_datalake_blueprint(account, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn):
+    session = boto3.Session(profile_name=account, region_name=region)
     datazone = session.client('datazone')
     datalake_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='DataLake')['items'][0]['id']
     put_environment_blueprint_configuration(datazone, domain_id, datalake_id, region, access_role_arn, provisioning_role_arn)
     add_policy_grant(datazone, domain_id, invitee_account_id, datalake_id)
     click.echo(f"    ✅ Configured DataLake/LakeHouseDatabase blueprint {datalake_id}.")
-    
 
-def configure_tooling_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn):
-    session = boto3.Session(profile_name=profile, region_name=region)
+
+def configure_tooling_blueprint(account, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn):
+    session = boto3.Session(profile_name=account, region_name=region)
     datazone = session.client('datazone')
     tooling_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='Tooling')['items'][0]['id']
 
@@ -223,17 +216,17 @@ def configure_tooling_blueprint(profile, invitee_account_id, domain_id, region, 
     click.echo(f"    ✅ Configured Tooling blueprint {tooling_id}.")
 
 
-def configure_blueprints(profile, invitee_account_id, governance_account_id, domain_id, region):
-    access_role_arn = create_access_role(profile, region, governance_account_id, domain_id)
-    provisioning_role_arn = create_provisioning_role(profile, governance_account_id)
+def configure_blueprints(account, invitee_account_id, governance_account_id, domain_id, region):
+    access_role_arn = create_access_role(account, region, governance_account_id, domain_id)
+    provisioning_role_arn = create_provisioning_role(account, governance_account_id)
 
-    configure_workflow_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn)
-    configure_datalake_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn)
-    configure_tooling_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn) 
+    configure_workflow_blueprint(account, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn)
+    configure_datalake_blueprint(account, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn)
+    configure_tooling_blueprint(account, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn) 
 
 
-def create_project_profile(profile, region, invitee_account_id, governance_account_id, domain_id):
-    session = boto3.Session(profile_name=profile, region_name=region)
+def create_project_profile(account, region, invitee_account_id, governance_account_id, domain_id):
+    session = boto3.Session(profile_name=account, region_name=region)
     datazone = session.client('datazone')
     tooling_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='Tooling')['items'][0]['id']
     datalake_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='DataLake')['items'][0]['id']
@@ -251,7 +244,7 @@ def create_project_profile(profile, region, invitee_account_id, governance_accou
 
     # will check that a project profile SQL Analytics does not already exist in the provided domain
     datazone = boto3.client('datazone')
-    profile_name = f'SQLAnalytics_{profile}'
+    profile_name = f'SQLAnalytics_{account}'
     profiles = datazone.list_project_profiles(domainIdentifier=domain_id, name=profile_name)['items']
     for profile in profiles:
         if profile['name'] == profile_name:
@@ -281,26 +274,27 @@ def create_project_profile(profile, region, invitee_account_id, governance_accou
 @click.command()
 @click.option('--domain-id', required=False, help='Domain ID to invite the account to (optional)')
 @click.option('--domain-name', required=False, help='Domain name to invite the account to (alternative to domain-id)')
-@click.option('--profile', required=True, help='AWS profile to invite')
-def invite_account(domain_id, domain_name, profile):
+@click.option('--account', required=True, help='AWS account profile to use')
+def invite_account(domain_id, domain_name, account):
     """Invite an AWS account to join DataZone domains.
     
     This command helps manage AWS account invitations to DataZone domains.
     
     Example:
-        sm invite-account --domain-name marc_test --profile dev
+        sm invite-account --domain-name marc_test --account dev
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)
         region = 'us-east-1'
 
         # load the credentials and id of the invited account
-        invitee_identity = get_profile_details(profile)
+        invitee_identity = get_account_details(account)
         invitee_account_id = invitee_identity['Account']
 
         # create the ram resource share in the governance account
-        governance_identity = get_profile_details('default')
+        governance_identity = get_account_details('default')
         governance_account_id = governance_identity['Account']
+
         ram = boto3.client('ram')
         ram.create_resource_share(
             name=f"DataZone-EXTENDED_ACCESS-{domain_id}-ORG-ONLY",
@@ -313,24 +307,24 @@ def invite_account(domain_id, domain_name, profile):
         time.sleep(15)
 
         # configure blueprints in the invited account
-        configure_blueprints(profile, invitee_account_id, governance_account_id, domain_id, region)
+        configure_blueprints(account, invitee_account_id, governance_account_id, domain_id, region)
 
         # configure a project profile in the governance account
-        create_project_profile(profile, region, invitee_account_id, governance_account_id, domain_id)
+        create_project_profile(account, region, invitee_account_id, governance_account_id, domain_id)
 
-        click.echo(f"✅ Account {profile} ({invitee_account_id}) joined the domain {domain_name} ({domain_id}).")
+        click.echo(f"✅ Account {account} ({invitee_account_id}) joined the domain {domain_name} ({domain_id}).")
 
     except Exception as e:
         click.echo(f"❌ Error processing account invitation: {str(e)}", err=True)
         click.get_current_context().exit(1)
 
 
-def delete_project_profile(profile, domain_id):
+def delete_project_profile(account, domain_id):
     datazone = boto3.client('datazone')
-    profiles = datazone.list_project_profiles(domainIdentifier=domain_id, name=f'SQLAnalytics_{profile}')['items']
+    profiles = datazone.list_project_profiles(domainIdentifier=domain_id, name=f'SQLAnalytics_{account}')['items']
     #click.echo(profiles)
     for p in profiles:
-        if p['name'] == f'SQLAnalytics_{profile}':
+        if p['name'] == f'SQLAnalytics_{account}':
             projects = datazone.list_projects(domainIdentifier=domain_id)['items']
             for project in projects:
                 project_detail = datazone.get_project(domainIdentifier=domain_id, identifier=project['id'])
@@ -346,28 +340,28 @@ def delete_project_profile(profile, domain_id):
 @click.command()
 @click.option('--domain-id', required=False, help='Domain ID to uninvite the account from (optional)')
 @click.option('--domain-name', required=False, help='Domain name to uninvite the account from (alternative to domain-id)')
-@click.option('--profile', required=True, help='AWS profile to uninvite')
-def uninvite_account(domain_id, domain_name, profile):
+@click.option('--account', required=True, help='AWS account profile to uninvite')
+def uninvite_account(domain_id, domain_name, account):
     """Uninvite an AWS account from DataZone domains by removing its resource shares.
     
     This command removes the resource shares that grant the specified account access to the domain.
     
     Example:
-        sm uninvite-account --domain-name marc_test --profile dev
+        sm uninvite-account --domain-name marc_test --account dev
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)
 
-        invitee_identity = get_profile_details(profile)
+        invitee_identity = get_account_details(account)
         invitee_account_id = invitee_identity['Account']
 
         # delete the project profile associated with the account
-        delete_project_profile(profile, domain_id)
+        delete_project_profile(account, domain_id)
 
         #delete the resource share associated with the account
         delete_resource_shares(domain_id, invitee_account_id)
 
-        click.echo(f"✅ Account {profile} ({invitee_account_id}) uninvited from the domain {domain_name} ({domain_id}).")
+        click.echo(f"✅ Account {account} ({invitee_account_id}) uninvited from the domain {domain_name} ({domain_id}).")
 
     except Exception as e:
         click.echo(f"❌ Error uninviting account: {str(e)}", err=True)
