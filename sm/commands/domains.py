@@ -2,7 +2,7 @@ import click
 import boto3
 from pprint import pformat
 import json
-from smus.commands.utils import get_domain_id, delete_resource_shares
+from sm.commands.utils import get_domain_id, delete_resource_shares, list_all_projects
 
 # ----------------------------------------
 # TODO
@@ -43,7 +43,7 @@ def describe_domain(domain_id, domain_name):
     Return a JSON document.
 
     Example:
-        smus describe-domain --id dzd_4s9s40qvcqalpj
+        sm describe-domain --id dzd_4s9s40qvcqalpj
     """
     try:
         datazone = boto3.client('datazone')
@@ -94,17 +94,6 @@ def describe_domain(domain_id, domain_name):
             environment_blueprint_configuration['_details'] = datazone.get_environment_blueprint_configuration(domainIdentifier=domain_id, environmentBlueprintIdentifier=environment_blueprint_configuration['environmentBlueprintId'])
             del environment_blueprint_configuration['_details']['ResponseMetadata']
 
-        # v1 API
-        # response = datazone.list_environment_profiles(
-        #    domainIdentifier=domain_id
-        # )
-        #result['environment_profiles'] = response['items']
-        # awsAccountId='string',
-        # awsAccountRegion='string',
-        # environmentBlueprintIdentifier='string',
-        # name='string',
-        # projectIdentifier='string'
-
         response = datazone.list_project_profiles(
             domainIdentifier=domain_id,
         )
@@ -113,36 +102,17 @@ def describe_domain(domain_id, domain_name):
             project_profile['_details'] = datazone.get_project_profile(domainIdentifier=domain_id, identifier=project_profile['id'])
             del project_profile['_details']['ResponseMetadata']
 
-        response = datazone.list_projects(
-            domainIdentifier=domain_id,
-        )
-        result['_projects'] = response['items']
-        for project in response['items']:
-            project['_details'] = datazone.get_project(domainIdentifier=domain_id, identifier=project['id'])
-            del project['_details']['ResponseMetadata']
+        result['_projects'] = list_all_projects(domain_id)
 
-            response = datazone.list_environments(
-               domainIdentifier=domain_id,
-               projectIdentifier=project['id'],
-            )
-            project['_environments'] = response['items']
-            for environment in project['_environments']:
-                environment['_details'] = datazone.get_environment(domainIdentifier=domain_id, identifier=environment['id'])
-                del environment['_details']['ResponseMetadata']
+        # v1 API
+        # response = datazone.list_environment_profiles(
+        #    domainIdentifier=domain_id
+        # )
 
-            response = datazone.list_project_memberships(
-               domainIdentifier=domain_id,
-               projectIdentifier=project['id'],
-            )
-            project['_project_memberships'] = response['members']
-            for user in project['_project_memberships']:
-                user_id = user['memberDetails']['user']
-                user_details = datazone.get_user_profile(domainIdentifier=domain_id, userIdentifier=user_id['userId'], type='SSO')['details']
-                user_id['_user_details'] = user_details
-
-# get_data_source
-# get_domain_unit
-# get_environment_profile
+        # unused functions
+        # get_data_source
+        # get_domain_unit
+        # get_environment_profile
 
         # Get the list of associated accounts
         pools = datazone.list_account_pools(domainIdentifier=domain_id)['items']
@@ -163,7 +133,7 @@ def create_domain(manifest):
     """Create a new DataZone domain with the specified parameters.
     
     Example:
-        smus create-domain --manifest marc_test.json
+        sm create-domain --manifest marc_test.json
     """
     try:
         datazone = boto3.client('datazone')
@@ -242,7 +212,7 @@ def delete_domain(domain_id, domain_name, force):
     Use with caution as this action cannot be undone.
     
     Example:
-        smus delete-domain --id dzd_xxxxxxxxx
+        sm delete-domain --id dzd_xxxxxxxxx
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)

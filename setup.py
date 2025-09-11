@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="smus-setup",
+    name="sm-setup",
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
@@ -11,7 +11,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'smus=smus.cli:main',
+            'sm=sm.cli:main',
         ],
     },
     python_requires='>=3.7',

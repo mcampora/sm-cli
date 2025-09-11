@@ -4,7 +4,7 @@ import boto3
 from botocore.exceptions import ClientError
 import json
 from dotenv import load_dotenv
-from smus.commands.utils import get_domain_id, delete_resource_shares, get_resource_shares
+from sm.commands.utils import get_domain_id, delete_resource_shares, get_resource_shares
 import time
 
 @click.command()
@@ -14,8 +14,8 @@ def list_accounts(domain_id, domain_name):
     """List all accounts associated with a DataZone domain.
     
     Example:
-        smus list-accounts --domain-id dzd_xxxxxxxxx
-        smus list-accounts --domain-name my-domain
+        sm list-accounts --domain-id dzd_xxxxxxxxx
+        sm list-accounts --domain-name my-domain
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)
@@ -134,32 +134,23 @@ def add_policy_grant(datazone, domain_id, invitee_account_id, blueprint_id):
     )   
 
 
+def configure_workflow_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn):
+    session = boto3.Session(profile_name=profile, region_name=region)
+    datazone = session.client('datazone')
+    workflow_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='Workflow')['items'][0]['id']
+    put_environment_blueprint_configuration(datazone, domain_id, workflow_id, region, access_role_arn, provisioning_role_arn)
+    add_policy_grant(datazone, domain_id, invitee_account_id, workflow_id)
+    click.echo(f"    ✅ Configured Workflow blueprint {workflow_id}.")
+
+
 def configure_datalake_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn):
     session = boto3.Session(profile_name=profile, region_name=region)
     datazone = session.client('datazone')
     datalake_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='DataLake')['items'][0]['id']
     put_environment_blueprint_configuration(datazone, domain_id, datalake_id, region, access_role_arn, provisioning_role_arn)
     add_policy_grant(datazone, domain_id, invitee_account_id, datalake_id)
-    click.echo(f"    ✅ Configured DataLake blueprint {datalake_id}.")
+    click.echo(f"    ✅ Configured DataLake/LakeHouseDatabase blueprint {datalake_id}.")
     
-
-def configure_redshift_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn):
-    session = boto3.Session(profile_name=profile, region_name=region)
-    datazone = session.client('datazone')
-    redshift_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='RedshiftServerless')['items'][0]['id']
-    put_environment_blueprint_configuration(datazone, domain_id, redshift_id, region, access_role_arn, provisioning_role_arn)
-    add_policy_grant(datazone, domain_id, invitee_account_id, redshift_id)
-    click.echo(f"    ✅ Configured Redshift blueprint {redshift_id}.")
-
-
-def configure_lakehouse_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn):
-    session = boto3.Session(profile_name=profile, region_name=region)
-    datazone = session.client('datazone')
-    lakehouse_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='Lakehouse')['items'][0]['id']
-    put_environment_blueprint_configuration(datazone, domain_id, lakehouse_id, region, access_role_arn, provisioning_role_arn)
-    add_policy_grant(datazone, domain_id, invitee_account_id, lakehouse_id)
-    click.echo(f"    ✅ Configured Lakehouse blueprint {lakehouse_id}.")
-
 
 def configure_tooling_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn):
     session = boto3.Session(profile_name=profile, region_name=region)
@@ -236,9 +227,8 @@ def configure_blueprints(profile, invitee_account_id, governance_account_id, dom
     access_role_arn = create_access_role(profile, region, governance_account_id, domain_id)
     provisioning_role_arn = create_provisioning_role(profile, governance_account_id)
 
+    configure_workflow_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn)
     configure_datalake_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn)
-    configure_redshift_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn)
-    configure_lakehouse_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn)
     configure_tooling_blueprint(profile, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn) 
 
 
@@ -247,16 +237,14 @@ def create_project_profile(profile, region, invitee_account_id, governance_accou
     datazone = session.client('datazone')
     tooling_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='Tooling')['items'][0]['id']
     datalake_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='DataLake')['items'][0]['id']
-    redshift_serverless_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='RedshiftServerless')['items'][0]['id']
-    redshift_catalog_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='LakehouseCatalog')['items'][0]['id']
+    workflow_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='Workflow')['items'][0]['id']
     
     with open('./templates/project-profile-template.json', 'r') as f:
         template = f.read()
     template = template.replace('${AWS_REGION}', region)
     template = template.replace('${TOOLING_ID}', tooling_id)
     template = template.replace('${DATALAKE_ID}', datalake_id)
-    template = template.replace('${REDSHIFT_SERVERLESS_ID}', redshift_serverless_id)
-    template = template.replace('${REDSHIFT_CATALOG_ID}', redshift_catalog_id)
+    template = template.replace('${WORKFLOW_ID}', workflow_id)
     template = template.replace('${ACCOUNT_ID}', invitee_account_id)
     config = json.loads(template)
     #click.echo(config)
@@ -300,7 +288,7 @@ def invite_account(domain_id, domain_name, profile):
     This command helps manage AWS account invitations to DataZone domains.
     
     Example:
-        smus invite-account --domain-name marc_test --profile dev
+        sm invite-account --domain-name marc_test --profile dev
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)
@@ -365,7 +353,7 @@ def uninvite_account(domain_id, domain_name, profile):
     This command removes the resource shares that grant the specified account access to the domain.
     
     Example:
-        smus uninvite-account --domain-name marc_test --profile dev
+        sm uninvite-account --domain-name marc_test --profile dev
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)

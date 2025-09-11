@@ -4,8 +4,7 @@
 credentials
 
 # output
-cms-domain.json
-marc_test.json
+info**
 
 # Python bytecode
 __pycache__/
@@ -43,3 +42,4 @@ ENV/
 
 # Local development
 .python-version
+marc_basic_test.json
