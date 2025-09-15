@@ -159,6 +159,7 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 
 ## Current limitations or required improvements
 - delete-project command returns immediately, the project deletion can take up to 5 minutes. You cannot use the uninvite-account or delete-domain commands until the project is deleted.
+- create-domain assumes that SageMaker provisioning and execution roles exist in the governance account.
 
 ## License
 
