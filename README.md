@@ -1,7 +1,9 @@
 # SageMaker Unified Studio CLI
 
 A command-line interface (CLI) tool to simplify the creation and management of AWS resources.  
-You can create a data mesh with a central governance account and 3 development accounts (dev, test, prod).  
+
+I was able to create a domain, invite accounts to this domain (ie. dev, test, prod), activate blueprints in these accounts, discover the settings coming with these blueprints, create a project profile with custom settings (ex. the GitHub organization), create projects with custom parameters (ex. the associated GitHub repo).
+
 Ultimately the goal of this POC is to illustrate how to manage the lifecycle of a given pipeline (from development to production). 
 
 ## Features
