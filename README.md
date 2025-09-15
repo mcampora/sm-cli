@@ -2,13 +2,7 @@
 
 A command-line interface (CLI) tool to simplify the creation and management of AWS resources.  
 You can create a data mesh with a central governance account and 3 development accounts (dev, test, prod).  
-The templates provided as example illustrate how to manage the lifecycle of a given pipeline. 
-- You have to create one project in dev, one in test and one in prod, alkl sharing the same repo,
-- You start crafting a workflow in dev,  
-- When you are ready to test it, you merge the dev branch in the test branch,
-- A Github workflow redeploy and execute the workflow in test, 
-- It checks the result, if everything is ok it merges the test branch in the prod branch.
-- A second GitHub workflow redeploy and execute the workflow in prod.
+Ultimately the goal of this POC is to illustrate how to manage the lifecycle of a given pipeline (from development to production). 
 
 ## Features
 
