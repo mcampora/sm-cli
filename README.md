@@ -50,25 +50,25 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 - **List Domains**
   List all SageMaker domains in the current region.
   ```bash
-  sm-cli list-domains
+  sm list-domains
   ```
 
 - **Describe Domain**
   Show detailed information about a specific domain.
   ```bash
-  sm-cli describe-domain --domain-id <domain_id>
+  sm describe-domain --domain-name <domain_name>
   ```
 
 - **Create Domain**
   Create a new SageMaker domain.
   ```bash
-  sm-cli create-domain --config-file <config_file>
+  sm create-domain --manifest <config_file>
   ```
 
 - **Delete Domain**
   Delete an existing SageMaker domain.
   ```bash
-  sm-cli delete-domain --domain-id <domain_id>
+  sm delete-domain --domain-name <domain_name> --force
   ```
 
 ### Account Management
@@ -76,19 +76,19 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 - **List Accounts**
   List all accounts in the organization.
   ```bash
-  sm-cli list-accounts
+  sm list-accounts
   ```
 
 - **Invite Account**
   Invite an AWS account to the organization.
   ```bash
-  sm-cli invite-account --account-id <account_id> --email <email>
+  sm invite-account --domain-name <domain_name> --account <profiel_namne>
   ```
 
 - **Uninvite Account**
   Remove an account invitation.
   ```bash
-  sm-cli uninvite-account --account-id <account_id>
+  sm uninvite-account --domain-name <domain_name> --account <profile_name>
   ```
 
 ### Project Management
@@ -96,19 +96,19 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 - **List Projects**
   List all projects in a domain.
   ```bash
-  sm-cli list-projects --domain-id <domain_id>
+  sm list-projects --domain-name <domain_name>
   ```
 
 - **Create Project**
   Create a new project.
   ```bash
-  sm-cli create-project --domain-id <domain_id> --project-name <name> --template <template_file>
+  sm create-project --domain-name <domain_name> --name <name> --account <profile_name>
   ```
 
 - **Delete Project**
   Delete a project.
   ```bash
-  sm-cli delete-project --domain-id <domain_id> --project-name <name>
+  sm delete-project --domain-name <domain_name> --name <name> --force
   ```
 
 ### Blueprint Management
@@ -116,13 +116,13 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 - **List Blueprints**
   List all available blueprints.
   ```bash
-  sm-cli list-blueprints
+  sm list-blueprints --domain-name <domain_name>
   ```
 
 - **Describe Blueprint**
   Display detailed information about a specific blueprint configuration.
   ```bash
-  sm-cli describe-blueprint --blueprint-name <name>
+  sm describe-blueprint --domain-name <domain_name> --name <blueprint_name>
   ```
 
 ### Utility Commands
@@ -130,13 +130,13 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 - **Status**
   Show the current status of the CLI and AWS configuration.
   ```bash
-  sm-cli status
+  sm status
   ```
 
 - **Help**
   Show help message and usage information.
   ```bash
-  sm-cli --help
+  sm --help
   ```
 
 ### Utility Commands
