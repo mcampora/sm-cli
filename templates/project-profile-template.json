@@ -6,6 +6,15 @@
         "awsRegion": {
             "regionName": "${AWS_REGION}"
         },
+        "configurationParameters": {
+            "parameterOverrides": [
+                {
+                    "isEditable": true,
+                    "name": "gitConnectionArn",
+                    "value": "arn:aws:codeconnections:us-east-1:555456986422:connection/66e6b9ef-a2db-4309-9654-95f2c8f7094f"
+                }
+            ]
+        },
         "deploymentMode": "ON_CREATE",
         "deploymentOrder": 0,
         "description": "Configuration for the Tooling",
@@ -41,7 +50,7 @@
         "awsRegion": {
             "regionName": "${AWS_REGION}"
         },
-        "deploymentMode": "ON_CREATE",
+        "deploymentMode": "ON_DEMAND",
         "deploymentOrder": 1,
         "description": "...",
         "environmentBlueprintId": "${WORKFLOW_ID}",

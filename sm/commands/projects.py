@@ -1,9 +1,10 @@
+from email.policy import default
 import click
 import boto3
 import json
-import os
 from sm.commands.utils import get_domain_id
 from sm.commands.utils import list_all_projects
+from sm.commands.utils import get_profile
 
 @click.command()
 @click.option('--domain-id', required=False, help='The ID of the domain (optional if --domain-name is provided)')
@@ -18,71 +19,122 @@ def list_projects(domain_id, domain_name):
     try:
         domain_id = get_domain_id(domain_name, domain_id)
         projects = list_all_projects(domain_id)
-        click.echo(json.dumps(projects, indent=2, default=str))
+        for project in projects:
+            click.echo(f"✅ Found project {project['name']} ({project['id']}) {project['projectStatus']}")
         
     except Exception as e:
         click.echo(f"❌ Error listing projects: {str(e)}", err=True)
         click.get_current_context().exit(1)
 
 
-def get_project_profile(environment):
-    """Return the project profile ARN based on environment."""
-    profiles = {
-        'dev': 'arn:aws:datazone:us-east-1:123456789012:project-profile/dev-profile',
-        'test': 'arn:aws:datazone:us-east-1:123456789012:project-profile/test-profile',
-        'prod': 'arn:aws:datazone:us-east-1:123456789012:project-profile/prod-profile'
-    }
-    return profiles.get(environment.lower(), profiles['dev'])
+@click.command()
+@click.option('--domain-id', required=False, help='The ID of the domain (optional if --domain-name is provided)')
+@click.option('--domain-name', required=False, help='The name of the domain (optional if --domain-id is provided)')
+@click.option('--name', required=True, help='The name of the project')
+@click.option('--account', default='default', help='AWS account profile to use')
+def create_project(domain_id, domain_name, name, account):
+    """Create a new project in the specified domain.
+    
+    Example:
+        sm create-project --domain-name my-domain --name project_name --account dev
+        sm create-project --domain-id dzd_xxxxxxxxx --name project_name --account dev
+    """
+    try:
+        session = boto3.Session(profile_name='default')
+        datazone = session.client('datazone')
 
+        domain_id = get_domain_id(domain_name, domain_id)
+        domain = datazone.get_domain(identifier=domain_id)
+        domain_unit_id = domain['rootDomainUnitId']
+        project_profile_name = f'Custom_{account}'
+        project_profile_id = get_profile(domain_id, project_profile_name)
+
+        with open('./templates/project-template.json', 'r') as f:
+            template = f.read()
+        template = template.replace('${DOMAIN_ID}', domain_id)
+        template = template.replace('${DOMAIN_UNIT_ID}', domain_unit_id)
+        template = template.replace('${PROJECT_NAME}', name)
+        template = template.replace('${PROJECT_PROFILE_ID}', project_profile_id)
+        if account == 'default':
+            branch = 'main'
+        else:
+            branch = account
+        template = template.replace('${BRANCH_NAME}', branch)
+        template = template.replace('${ACCOUNT}', account)
+        params = json.loads(template)
+
+        owner = params['owner']
+        del params['owner']
+
+        project = datazone.create_project(**params)
+        del project['ResponseMetadata']
+        #click.echo(project)
+
+        # function to search a user profile by email and assign it as owner of a domain unit
+        def assign_owner(domain_id, project_id, owner_email):
+            users = datazone.search_user_profiles(domainIdentifier=domain_id, userType='SSO_USER', searchText=owner_email)
+            if len(users['items']) == 0:
+                raise click.BadParameter(f"User {owner_email} not found in domain {domain_id}")
+            user = users['items'][0]
+            datazone.create_project_membership(
+                designation='PROJECT_OWNER',
+                domainIdentifier=domain_id,
+                member={
+                    'userIdentifier': user['id']
+                },
+                projectIdentifier=project_id
+            )
+        assign_owner(domain_id, project['id'], owner)
+
+        click.echo(f"✅ Project {name} created successfully!")
+               
+    except Exception as e:
+        click.echo(f"❌ Error creating project: {str(e)}", err=True)
+        click.get_current_context().exit(1)
+
+def get_project(domain_id, name):
+    session = boto3.Session(profile_name='default')
+    datazone = session.client('datazone')
+    projects = list_all_projects(domain_id)
+    for project in projects:
+        if project['name'] == name:
+            return project['id']
+    raise click.BadParameter(f"Project '{name}' not found in domain '{domain_id}'.")
 
 @click.command()
 @click.option('--domain-id', required=False, help='The ID of the domain (optional if --domain-name is provided)')
 @click.option('--domain-name', required=False, help='The name of the domain (optional if --domain-id is provided)')
-@click.option('--name', required=True, help='Name of the project to create')
-@click.option('--description', default='', help='Description of the project')
-@click.option('--environment', type=click.Choice(['dev', 'test', 'prod'], case_sensitive=False), 
-              default='dev', help='Environment for the project (dev/test/prod)')
-@click.option('--account', default='default', help='AWS account profile to use')
-def create_project(domain_id, domain_name, name, description, environment, account):
-    """Create a new project in the specified domain.
+@click.option('--name', required=True, help='The name of the project')
+@click.option('--force', is_flag=True, default=False, help='Skip confirmation prompt')
+def delete_project(domain_id, domain_name, name, force):
+    """Delete a project in the specified domain.
     
     Example:
-        sm create-project --domain-name my-domain --name my-project --environment dev
-        sm create-project --domain-id dzd_xxxxxxxxx --name my-project --environment test
+        sm delete-project --domain-name my-domain --name project_name --force
     """
     try:
-        # Set the AWS account profile
-        boto3.setup_default_session(profile_name=account)
-        
-        # Get the domain ID
+        session = boto3.Session(profile_name='default')
+        datazone = session.client('datazone')
         domain_id = get_domain_id(domain_name, domain_id)
-        
-        # Get the appropriate project profile based on environment
-        project_profile_arn = get_project_profile(environment)
-        
-        # Initialize the DataZone client with the specified profile
-        datazone = boto3.client('datazone')
-        
-        # Create the project
-        response = datazone.create_project(
-            domainIdentifier=domain_id,
-            name=name,
-            description=description,
-            projectProfile=project_profile_arn
-        )
-        
-        # Get the project details
-        project_id = response['id']
-        project_details = datazone.get_project(
-            domainIdentifier=domain_id,
-            identifier=project_id
-        )
-        
-        click.echo("✅ Project created successfully!")
-        click.echo(json.dumps(project_details, indent=2, default=str))
-        
-        return project_details
-        
+        project_id = get_project(domain_id, name)
+
+        click.echo(f"\n⚠️  WARNING: You are about to delete the following project:")
+        click.echo(f"   Name: {name}")
+        click.echo(f"   ID: {project_id}")
+        click.echo("\nThis action will permanently delete the project and all its resources!")
+        click.echo("This operation cannot be undone!")
+            
+        if not force:
+            if not click.confirm("\nAre you sure you want to delete this project?", default=False):
+                click.echo("Deletion canceled!")
+                return
+            
+        click.echo(f"\nDeleting project '{name}' (ID: {project_id})...")
+
+        datazone.delete_project(domainIdentifier=domain_id, identifier=project_id, skipDeletionCheck=True)
+
+        click.echo(f"✅ Project {name} deleted successfully!")
+               
     except Exception as e:
-        click.echo(f"❌ Error creating project: {str(e)}", err=True)
+        click.echo(f"❌ Error deleting project: {str(e)}", err=True)
         click.get_current_context().exit(1)

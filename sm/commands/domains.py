@@ -2,12 +2,7 @@ import click
 import boto3
 from pprint import pformat
 import json
-from sm.commands.utils import get_domain_id, delete_resource_shares, list_all_projects
-
-# ----------------------------------------
-# TODO
-# create the domain roles if missing
-# ----------------------------------------
+from sm.commands.utils import get_domain_id, delete_resource_shares, list_all_projects, delete_project_profile
 
 @click.command()
 def list_domains():
@@ -35,9 +30,9 @@ def list_domains():
         click.get_current_context().exit(1)
 
 @click.command()
-@click.option('--id', 'domain_id', required=False, help='The ID of the domain to describe')
-@click.option('--name', 'domain_name', required=False, help='The Name of the domain to describe')
-def describe_domain(domain_id, domain_name):
+@click.option('--id', required=False, help='The ID of the domain to describe')
+@click.option('--name', required=False, help='The Name of the domain to describe')
+def describe_domain(id, name):
     """
     Display detailed information about a specific domain.
     Return a JSON document.
@@ -48,7 +43,7 @@ def describe_domain(domain_id, domain_name):
     try:
         datazone = boto3.client('datazone')
         result = {}
-        domain_id = get_domain_id(domain_name, domain_id)
+        domain_id = get_domain_id(name, id)
 
         # Get domain details
         domain = datazone.get_domain(identifier=domain_id)
@@ -115,11 +110,11 @@ def describe_domain(domain_id, domain_name):
         # get_environment_profile
 
         # Get the list of associated accounts
-        pools = datazone.list_account_pools(domainIdentifier=domain_id)['items']
-        for pool in pools:
-            accounts = datazone.list_accounts_in_account_pool(domainIdentifier=domain_id, identifier=pool['id'])['items']
-            pool['_accounts'] = accounts
-        result['_pools'] = pools
+        #pools = datazone.list_account_pools(domainIdentifier=domain_id)['items']
+        #for pool in pools:
+        #    accounts = datazone.list_accounts_in_account_pool(domainIdentifier=domain_id, identifier=pool['id'])['items']
+        #    pool['_accounts'] = accounts
+        #result['_pools'] = pools
             
         click.echo(json.dumps(result, default=str, indent=4))    
 
@@ -238,10 +233,10 @@ def delete_domain(domain_id, domain_name, force):
             
         click.echo(f"\nDeleting domain '{domain_name}' (ID: {domain_id})...")
             
-        # Delete the resource shares
+        delete_project_profile('dev', domain_id)
+        delete_project_profile('test', domain_id)
+        delete_project_profile('prod', domain_id)
         delete_resource_shares(domain_id)
-
-        # Delete the domain
         response = datazone.delete_domain(identifier=domain_id)
             
         click.echo(f"✅ Domain '{domain_name}' has been successfully deleted.")

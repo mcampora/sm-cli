@@ -51,7 +51,29 @@ def delete_resource_shares(domain_id, account_id = None):
         if to_delete:
             ram.delete_resource_share(resourceShareArn=share['arn'])
             click.echo(f"    ✅ Deleted resource share {share['arn']}.")
-    
+
+
+def delete_project_profile(account, domain_id):
+    datazone = boto3.client('datazone')
+    profiles = datazone.list_project_profiles(domainIdentifier=domain_id, name=f'Custom_{account}')['items']
+    #click.echo(profiles)
+    found = False
+    for p in profiles:
+        if p['name'] == f'Custom_{account}':
+            found = True
+            projects = datazone.list_projects(domainIdentifier=domain_id)['items']
+            for project in projects:
+                project_detail = datazone.get_project(domainIdentifier=domain_id, identifier=project['id'])
+                #click.echo(project_detail)
+                #click.echo(project)
+                if project_detail['projectProfileId'] == p['id']:
+                    datazone.delete_project(domainIdentifier=domain_id, identifier=project['id'], skipDeletionCheck=True)
+                    click.echo(f"    ✅ Deleted project {project['name']} in the domain {domain_id}.")
+            datazone.delete_project_profile(domainIdentifier=domain_id, identifier=p['id'])
+            click.echo(f"    ✅ Deleted project profile {p['name']} in the domain {domain_id}.")
+    if not found:
+        click.echo(f"    ✅ Project profile not found in the domain {domain_id} and account {account}.")
+
 def list_all_projects(domain_id):
     datazone = boto3.client('datazone')
     response = datazone.list_projects(
@@ -81,3 +103,11 @@ def list_all_projects(domain_id):
             user_details = datazone.get_user_profile(domainIdentifier=domain_id, userIdentifier=user_id['userId'], type='SSO')['details']
             user_id['_user_details'] = user_details
     return result
+
+def get_profile(domain_id, name):
+    datazone = boto3.client('datazone')
+    project_profiles = datazone.list_project_profiles(domainIdentifier=domain_id, name=name)['items']
+    if len(project_profiles) == 0:
+        raise click.ClickException(f"Project profile '{name}' not found in domain '{domain_id}'.")
+    return project_profiles[0]['id']
+    

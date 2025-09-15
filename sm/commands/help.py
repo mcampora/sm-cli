@@ -19,7 +19,9 @@ def help():
     click.echo("  delete-domain     Delete a domain and its resources (use with caution).")
     click.echo("  list-accounts     List accounts associated with a domain.")
     click.echo("  invite-account    Invite an AWS account to join domains.")
+    click.echo("  describe-blueprint Display detailed information about a blueprint configuration in a domain and account.")
     click.echo("  uninvite-account  Remove an AWS account's access to domains.")
     click.echo("  list-projects     List all projects in a domain.")
     click.echo("  create-project    Create a new project in a domain.")
+    click.echo("  delete-project    Delete a project from a domain.")
     

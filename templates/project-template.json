@@ -1,0 +1,36 @@
+{   
+    "owner": "mcampora@ebsco.com",
+    "description": "",
+    "domainIdentifier": "${DOMAIN_ID}",
+    "domainUnitId": "${DOMAIN_UNIT_ID}",
+    "name": "${PROJECT_NAME}",
+    "projectProfileId": "${PROJECT_PROFILE_ID}",
+    "userParameters": [
+        {
+            "environmentConfigurationName": "Tooling",
+            "environmentParameters": [
+                {
+                    "name": "isNewGitRepository",
+                    "value": "false"
+                },
+                {
+                    "name": "gitBranchName",
+                    "value": "${BRANCH_NAME}"
+                },
+                {
+                    "name": "gitFullRepositoryId",
+                    "value": "EBSCOIS-SANDBOX/test_custom_repo"
+                }
+            ]
+        },
+        {
+            "environmentConfigurationName": "Lakehouse Database",
+            "environmentParameters": [
+                {
+                    "name": "glueDbName",
+                    "value": "${ACCOUNT}_${PROJECT_NAME}_glue_db"
+                }
+            ]
+        }
+    ]
+}

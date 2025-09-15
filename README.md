@@ -1,6 +1,14 @@
 # SageMaker Unified Studio CLI
 
-A command-line interface (CLI) tool to simplify the creation and management of AWS resources.
+A command-line interface (CLI) tool to simplify the creation and management of AWS resources.  
+You can create a data mesh with a central governance account and 3 development accounts (dev, test, prod).  
+The templates provided as example illustrate how to manage the lifecycle of a given pipeline. 
+- You have to create one project in dev, one in test and one in prod, alkl sharing the same repo,
+- You start crafting a workflow in dev,  
+- When you are ready to test it, you merge the dev branch in the test branch,
+- A Github workflow redeploy and execute the workflow in test, 
+- It checks the result, if everything is ok it merges the test branch in the prod branch.
+- A second GitHub workflow redeploy and execute the workflow in prod.
 
 ## Features
 
@@ -45,70 +53,96 @@ A command-line interface (CLI) tool to simplify the creation and management of A
 
 ### Domain Management
 
-- **List all domains**
-List all the available domains in the default (governance) account.  
+- **List Domains**
+  List all SageMaker domains in the current region.
   ```bash
-  sm list-domains
+  sm-cli list-domains
   ```
 
-- **Describe a specific domain**
-Dumps the details of a specific domain as a JSON document.  
+- **Describe Domain**
+  Show detailed information about a specific domain.
   ```bash
-  sm describe-domain --name your-domain
-  # or
-  sm describe-domain --domain-id dzd_xxxxxxxxx
+  sm-cli describe-domain --domain-id <domain_id>
   ```
 
-- **Create a new domain**
-Create a new domain from a manifest file, an example is available in the main folder.
+- **Create Domain**
+  Create a new SageMaker domain.
   ```bash
-  sm create-domain --manifest domain.json
+  sm-cli create-domain --config-file <config_file>
   ```
 
-- **Delete a domain**
-Delete a domain and its resources, use with caution as it will delete all assets, projects, project profiles. accounts associations.
+- **Delete Domain**
+  Delete an existing SageMaker domain.
   ```bash
-  sm delete-domain --name your-domain
-  # or with force flag (no confirmation)
-  sm delete-domain --name your-domain --force
+  sm-cli delete-domain --domain-id <domain_id>
   ```
 
 ### Account Management
 
-- **List accounts associated with a domain**
-List all the accounts associated with a given domain.
+- **List Accounts**
+  List all accounts in the organization.
   ```bash
-  sm list-accounts --domain-name your-domain
-  # or
-  sm list-accounts --domain-id dzd_xxxxxxxxx
+  sm-cli list-accounts
   ```
 
-- **Invite an AWS account to a domain**
-Invite an AWS account to a domain, creates a project profile for the account (ex. CustomProfile_dev).
+- **Invite Account**
+  Invite an AWS account to the organization.
   ```bash
-  sm invite-account --domain-name your-domain --account dev
+  sm-cli invite-account --account-id <account_id> --email <email>
   ```
 
-- **Uninvite an AWS account from a domain**
-Remove an AWS account from a domain, use with caution as it will delete all assets, projects, the project profile and account association.
+- **Uninvite Account**
+  Remove an account invitation.
   ```bash
-  sm uninvite-account --domain-name your-domain --account dev
+  sm-cli uninvite-account --account-id <account_id>
   ```
 
 ### Project Management
 
-- **List all projects in a domain**
-List all the projects associated with a given domain. Dumps the details as a JSON document.  
+- **List Projects**
+  List all projects in a domain.
   ```bash
-  sm list-projects --domain-name your-domain
-  # or
-  sm list-projects --domain-id dzd_xxxxxxxxx
+  sm-cli list-projects --domain-id <domain_id>
   ```
 
-- **Create a new project**
-Create a new project in a domain from a manifest file, an example is available in the main folder.
+- **Create Project**
+  Create a new project.
   ```bash
-  sm create-project --domain-name your-domain --manifest project.json --account dev
+  sm-cli create-project --domain-id <domain_id> --project-name <name> --template <template_file>
+  ```
+
+- **Delete Project**
+  Delete a project.
+  ```bash
+  sm-cli delete-project --domain-id <domain_id> --project-name <name>
+  ```
+
+### Blueprint Management
+
+- **List Blueprints**
+  List all available blueprints.
+  ```bash
+  sm-cli list-blueprints
+  ```
+
+- **Describe Blueprint**
+  Display detailed information about a specific blueprint configuration.
+  ```bash
+  sm-cli describe-blueprint --blueprint-name <name>
+  ```
+
+### Utility Commands
+
+- **Status**
+  Show the current status of the CLI and AWS configuration.
+  ```bash
+  sm-cli status
+  ```
+
+- **Help**
+  Show help message and usage information.
+  ```bash
+  sm-cli --help
   ```
 
 ### Utility Commands
@@ -127,14 +161,8 @@ Create a new project in a domain from a manifest file, an example is available i
   sm status --account dev
   ```
 
-## Configuration
-
-The tool uses the AWS credentials file (default location: `./credentials`). You can specify different profiles using the `--account` flag with any command.
-
-Check AWS connection status:
-```bash
-sm status
-```
+## Current limitations or required improvements
+- delete-project command returns immediately, the project deletion can take up to 5 minutes. You cannot use the uninvite-account or delete-domain commands until the project is deleted.
 
 ## License
 

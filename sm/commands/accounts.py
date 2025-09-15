@@ -4,8 +4,78 @@ import boto3
 from botocore.exceptions import ClientError
 import json
 from dotenv import load_dotenv
-from sm.commands.utils import get_domain_id, delete_resource_shares, get_resource_shares, get_account_details
+from sm.commands.utils import get_domain_id, delete_resource_shares, get_resource_shares, get_account_details, delete_project_profile
 import time
+
+@click.command()
+@click.option('--domain-id', required=False, help='The ID of the domain')
+@click.option('--domain-name', help='The name of the domain (alternative to domain-id)')
+@click.option('--account', required=True, default='default', help='The AWS account profile name')
+def list_blueprints(domain_id, domain_name, account):
+    """List all blueprints in a DataZone domain and specific account.
+    
+    Example:
+        sm list-blueprint --domain-name my-domain --account dev
+    """
+    try:
+        domain_id = get_domain_id(domain_name, domain_id)
+        session = boto3.Session(profile_name=account, region_name='us-east-1')
+        datazone = session.client('datazone')
+        blueprints = datazone.list_environment_blueprints(
+            domainIdentifier=domain_id,
+            managed=True,
+            maxResults=50
+        )
+        for b in blueprints['items']:
+            click.echo(f"{b['name']} - {b['id']} ")
+        
+    except Exception as e:
+        click.echo(f"❌ Error listing blueprints: {str(e)}", err=True)
+        click.get_current_context().exit(1)
+
+@click.command()
+@click.option('--domain-id', required=False, help='The ID of the domain')
+@click.option('--domain-name', help='The name of the domain (alternative to domain-id)')
+@click.option('--account', required=True, default='default', help='The AWS account profile name')
+@click.option('--name', required=True, help='The name of the blueprint to describe')
+def describe_blueprint(domain_id, domain_name, account, name):
+    """Describe a specific blueprint configuration in a DataZone domain.
+    
+    Example:
+        sm describe-blueprint --domain-id dzd_xxxxxxxxx --account dev --blueprint-name Workflow
+        sm describe-blueprint --domain-name my-domain --account dev --blueprint-name DataLake
+    """
+    try:
+        domain_id = get_domain_id(domain_name, domain_id)
+        
+        session = boto3.Session(profile_name=account, region_name='us-east-1')
+        datazone = session.client('datazone')
+        
+        blueprints = datazone.list_environment_blueprints(
+            domainIdentifier=domain_id,
+            managed=True,
+            maxResults=50
+        )
+        blueprint = None
+        for b in blueprints['items']:
+            #click.echo(b['name'])
+            if b['name'] == name:
+                blueprint = b
+                break
+        if blueprint == None:
+            raise click.BadParameter(f"❌ No blueprint found with name '{name}'")
+
+        blueprint_id = blueprint['id']
+        config = datazone.get_environment_blueprint(
+            domainIdentifier=domain_id,
+            identifier=blueprint_id
+        )
+        click.echo(json.dumps(config['userParameters'], indent=2, default=str))
+            
+    except Exception as e:
+        click.echo(f"❌ Error describing blueprint: {str(e)}", err=True)
+        click.get_current_context().exit(1)
+
 
 @click.command()
 @click.option('--domain-id', required=False, help='The ID of the domain')
@@ -244,7 +314,7 @@ def create_project_profile(account, region, invitee_account_id, governance_accou
 
     # will check that a project profile SQL Analytics does not already exist in the provided domain
     datazone = boto3.client('datazone')
-    profile_name = f'SQLAnalytics_{account}'
+    profile_name = f'Custom_{account}'
     profiles = datazone.list_project_profiles(domainIdentifier=domain_id, name=profile_name)['items']
     for profile in profiles:
         if profile['name'] == profile_name:
@@ -319,29 +389,12 @@ def invite_account(domain_id, domain_name, account):
         click.get_current_context().exit(1)
 
 
-def delete_project_profile(account, domain_id):
-    datazone = boto3.client('datazone')
-    profiles = datazone.list_project_profiles(domainIdentifier=domain_id, name=f'SQLAnalytics_{account}')['items']
-    #click.echo(profiles)
-    for p in profiles:
-        if p['name'] == f'SQLAnalytics_{account}':
-            projects = datazone.list_projects(domainIdentifier=domain_id)['items']
-            for project in projects:
-                project_detail = datazone.get_project(domainIdentifier=domain_id, identifier=project['id'])
-                #click.echo(project_detail)
-                click.echo(project)
-                if project_detail['projectProfileId'] == p['id']:
-                    datazone.delete_project(domainIdentifier=domain_id, identifier=project['id'], skipDeletionCheck=True)
-                    click.echo(f"    ✅ Deleted project {project['name']} in the domain {domain_id}.")
-            datazone.delete_project_profile(domainIdentifier=domain_id, identifier=p['id'])
-            click.echo(f"    ✅ Deleted project profile {p['name']} in the domain {domain_id}.")
-
-
 @click.command()
 @click.option('--domain-id', required=False, help='Domain ID to uninvite the account from (optional)')
 @click.option('--domain-name', required=False, help='Domain name to uninvite the account from (alternative to domain-id)')
 @click.option('--account', required=True, help='AWS account profile to uninvite')
-def uninvite_account(domain_id, domain_name, account):
+@click.option('--force', is_flag=True, default=False, help='Skip confirmation prompt')
+def uninvite_account(domain_id, domain_name, account, force):
     """Uninvite an AWS account from DataZone domains by removing its resource shares.
     
     This command removes the resource shares that grant the specified account access to the domain.
@@ -354,6 +407,18 @@ def uninvite_account(domain_id, domain_name, account):
 
         invitee_identity = get_account_details(account)
         invitee_account_id = invitee_identity['Account']
+
+        click.echo(f"\n⚠️  WARNING: You are about to delete the following account association:")
+        click.echo(f"   {account} ({invitee_account_id})")
+        click.echo("\nThis action will permanently delete the projects created in this account and all the corresponding resources, it will also delete the project profile and resourc eshare created for this account!")
+        click.echo("This operation cannot be undone!")
+            
+        if not force:
+            if not click.confirm("\nAre you sure you want to delete this account association?", default=False):
+                click.echo("Deletion canceled!")
+                return
+            
+        click.echo(f"\nDeleting account association {account} ({invitee_account_id})...")
 
         # delete the project profile associated with the account
         delete_project_profile(account, domain_id)
