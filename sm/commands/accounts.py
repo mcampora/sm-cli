@@ -295,14 +295,14 @@ def configure_blueprints(account, invitee_account_id, governance_account_id, dom
     configure_tooling_blueprint(account, invitee_account_id, domain_id, region, access_role_arn, provisioning_role_arn) 
 
 
-def create_project_profile(account, region, invitee_account_id, governance_account_id, domain_id):
+def create_project_profile(account, region, invitee_account_id, governance_account_id, domain_id, template):
     session = boto3.Session(profile_name=account, region_name=region)
     datazone = session.client('datazone')
     tooling_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='Tooling')['items'][0]['id']
     datalake_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='DataLake')['items'][0]['id']
     workflow_id = datazone.list_environment_blueprints(domainIdentifier=domain_id, managed=True, name='Workflow')['items'][0]['id']
     
-    with open('./templates/project-profile-template.json', 'r') as f:
+    with open(template, 'r') as f:
         template = f.read()
     template = template.replace('${AWS_REGION}', region)
     template = template.replace('${TOOLING_ID}', tooling_id)
@@ -345,7 +345,8 @@ def create_project_profile(account, region, invitee_account_id, governance_accou
 @click.option('--domain-id', required=False, help='Domain ID to invite the account to (optional)')
 @click.option('--domain-name', required=False, help='Domain name to invite the account to (alternative to domain-id)')
 @click.option('--account', required=True, help='AWS account profile to use')
-def invite_account(domain_id, domain_name, account):
+@click.option('--template', required=True, help='Template to be used to configure the project profile')
+def invite_account(domain_id, domain_name, account, template):
     """Invite an AWS account to join DataZone domains.
     
     This command helps manage AWS account invitations to DataZone domains.
@@ -380,7 +381,7 @@ def invite_account(domain_id, domain_name, account):
         configure_blueprints(account, invitee_account_id, governance_account_id, domain_id, region)
 
         # configure a project profile in the governance account
-        create_project_profile(account, region, invitee_account_id, governance_account_id, domain_id)
+        create_project_profile(account, region, invitee_account_id, governance_account_id, domain_id, template)
 
         click.echo(f"✅ Account {account} ({invitee_account_id}) joined the domain {domain_name} ({domain_id}).")
 

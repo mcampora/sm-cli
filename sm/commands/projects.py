@@ -32,7 +32,8 @@ def list_projects(domain_id, domain_name):
 @click.option('--domain-name', required=False, help='The name of the domain (optional if --domain-id is provided)')
 @click.option('--name', required=True, help='The name of the project')
 @click.option('--account', default='default', help='AWS account profile to use')
-def create_project(domain_id, domain_name, name, account):
+@click.option('--template', required=True, help='A template used to configure the project.')
+def create_project(domain_id, domain_name, name, account, template):
     """Create a new project in the specified domain.
     
     Example:
@@ -49,7 +50,7 @@ def create_project(domain_id, domain_name, name, account):
         project_profile_name = f'Custom_{account}'
         project_profile_id = get_profile(domain_id, project_profile_name)
 
-        with open('./templates/project-template.json', 'r') as f:
+        with open(template, 'r') as f:
             template = f.read()
         template = template.replace('${DOMAIN_ID}', domain_id)
         template = template.replace('${DOMAIN_UNIT_ID}', domain_unit_id)
@@ -72,6 +73,7 @@ def create_project(domain_id, domain_name, name, account):
 
         # function to search a user profile by email and assign it as owner of a domain unit
         def assign_owner(domain_id, project_id, owner_email):
+            click.echo(f"Assigning owner {owner_email} to project {project_id}...")
             users = datazone.search_user_profiles(domainIdentifier=domain_id, userType='SSO_USER', searchText=owner_email)
             if len(users['items']) == 0:
                 raise click.BadParameter(f"User {owner_email} not found in domain {domain_id}")

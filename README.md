@@ -21,8 +21,9 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 
 2. Create a virtual environment (recommended):
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   python3 -m venv venv
+   # On Windows: venv\Scripts\activate
+   source venv/bin/activate
    ```
 
 3. Install the package in development mode:
@@ -32,7 +33,7 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 
 ## Configuration
 
-1. Open the credentials file and update it with your AWS credentials:
+1. Create a ./credentials file and update it with your AWS credentials:
    ```bash
    [default]
    aws_access_key_id=...
