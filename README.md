@@ -15,8 +15,8 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/sm-setup.git
-   cd sm-setup
+   git clone https://github.com/mcampora/sm-cli.git
+   cd sm-cli
    ```
 
 2. Create a virtual environment (recommended):
