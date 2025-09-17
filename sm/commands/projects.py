@@ -6,15 +6,20 @@ from sm.commands.utils import get_domain_id
 from sm.commands.utils import list_all_projects
 from sm.commands.utils import get_profile
 
-@click.command()
+@click.group()
+def projects():
+    """Manage DataZone projects"""
+    pass
+
+@projects.command(name='list')
 @click.option('--domain-id', required=False, help='The ID of the domain (optional if --domain-name is provided)')
 @click.option('--domain-name', required=False, help='The name of the domain (optional if --domain-id is provided)')
 def list_projects(domain_id, domain_name):
     """List all projects in a DataZone domain.
     
     Example:
-        sm list-projects --domain-name my-domain
-        sm list-projects --domain-id dzd_xxxxxxxxx
+        sm projects list --domain-name my-domain
+        sm projects list --domain-id dzd_xxxxxxxxx
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)
@@ -27,18 +32,18 @@ def list_projects(domain_id, domain_name):
         click.get_current_context().exit(1)
 
 
-@click.command()
+@projects.command(name='create')
 @click.option('--domain-id', required=False, help='The ID of the domain (optional if --domain-name is provided)')
 @click.option('--domain-name', required=False, help='The name of the domain (optional if --domain-id is provided)')
 @click.option('--name', required=True, help='The name of the project')
 @click.option('--account', default='default', help='AWS account profile to use')
 @click.option('--template', required=True, help='A template used to configure the project.')
-def create_project(domain_id, domain_name, name, account, template):
+def create(domain_id, domain_name, name, account, template):
     """Create a new project in the specified domain.
     
     Example:
-        sm create-project --domain-name my-domain --name project_name --account dev
-        sm create-project --domain-id dzd_xxxxxxxxx --name project_name --account dev
+        sm projects create --domain-name my-domain --name project_name --account dev
+        sm projects create --domain-id dzd_xxxxxxxxx --name project_name --account dev --template custom.json
     """
     try:
         session = boto3.Session(profile_name='default')
@@ -103,16 +108,17 @@ def get_project(domain_id, name):
             return project['id']
     raise click.BadParameter(f"Project '{name}' not found in domain '{domain_id}'.")
 
-@click.command()
+@projects.command(name='delete')
 @click.option('--domain-id', required=False, help='The ID of the domain (optional if --domain-name is provided)')
 @click.option('--domain-name', required=False, help='The name of the domain (optional if --domain-id is provided)')
 @click.option('--name', required=True, help='The name of the project')
 @click.option('--force', is_flag=True, default=False, help='Skip confirmation prompt')
-def delete_project(domain_id, domain_name, name, force):
+def delete(domain_id, domain_name, name, force):
     """Delete a project in the specified domain.
     
     Example:
-        sm delete-project --domain-name my-domain --name project_name --force
+        sm projects delete --domain-name my-domain --name project_name
+        sm projects delete --domain-id dzd_xxxxxxxxx --name project_name --force
     """
     try:
         session = boto3.Session(profile_name='default')
@@ -140,3 +146,8 @@ def delete_project(domain_id, domain_name, name, force):
     except Exception as e:
         click.echo(f"❌ Error deleting project: {str(e)}", err=True)
         click.get_current_context().exit(1)
+
+
+def register_commands(cli):
+    """Register project commands with the main CLI"""
+    cli.add_command(projects)

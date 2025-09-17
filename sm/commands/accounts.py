@@ -7,7 +7,12 @@ from dotenv import load_dotenv
 from sm.commands.utils import get_domain_id, delete_resource_shares, get_resource_shares, get_account_details, delete_project_profile
 import time
 
-@click.command()
+@click.group()
+def accounts():
+    """Manage AWS accounts in DataZone domains"""
+    pass
+
+@accounts.command(name='list-blueprints')
 @click.option('--domain-id', required=False, help='The ID of the domain')
 @click.option('--domain-name', help='The name of the domain (alternative to domain-id)')
 @click.option('--account', required=True, default='default', help='The AWS account profile name')
@@ -15,7 +20,8 @@ def list_blueprints(domain_id, domain_name, account):
     """List all blueprints in a DataZone domain and specific account.
     
     Example:
-        sm list-blueprint --domain-name my-domain --account dev
+        sm accounts list-blueprints --domain-name my-domain --account dev
+        sm accounts list-blueprints --domain-id dzd_xxxxxxxxx --account test
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)
@@ -33,7 +39,7 @@ def list_blueprints(domain_id, domain_name, account):
         click.echo(f"❌ Error listing blueprints: {str(e)}", err=True)
         click.get_current_context().exit(1)
 
-@click.command()
+@accounts.command(name='describe-blueprint')
 @click.option('--domain-id', required=False, help='The ID of the domain')
 @click.option('--domain-name', help='The name of the domain (alternative to domain-id)')
 @click.option('--account', required=True, default='default', help='The AWS account profile name')
@@ -42,8 +48,8 @@ def describe_blueprint(domain_id, domain_name, account, name):
     """Describe a specific blueprint configuration in a DataZone domain.
     
     Example:
-        sm describe-blueprint --domain-id dzd_xxxxxxxxx --account dev --blueprint-name Workflow
-        sm describe-blueprint --domain-name my-domain --account dev --blueprint-name DataLake
+        sm accounts describe-blueprint --domain-id dzd_xxxxxxxxx --account dev --name Workflow
+        sm accounts describe-blueprint --domain-name my-domain --account dev --name DataLake
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)
@@ -77,15 +83,15 @@ def describe_blueprint(domain_id, domain_name, account, name):
         click.get_current_context().exit(1)
 
 
-@click.command()
+@accounts.command(name='list')
 @click.option('--domain-id', required=False, help='The ID of the domain')
 @click.option('--domain-name', help='The name of the domain (alternative to domain-id)')
 def list_accounts(domain_id, domain_name):
     """List all accounts associated with a DataZone domain.
     
     Example:
-        sm list-accounts --domain-id dzd_xxxxxxxxx
-        sm list-accounts --domain-name my-domain
+        sm accounts list --domain-id dzd_xxxxxxxxx
+        sm accounts list --domain-name my-domain
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)
@@ -96,6 +102,11 @@ def list_accounts(domain_id, domain_name):
     except Exception as e:
         click.echo(f"❌ Error listing resource shares: {str(e)}", err=True)
         click.get_current_context().exit(1)
+
+
+def register_commands(cli):
+    """Register account commands with the main CLI"""
+    cli.add_command(accounts)
 
 
 def create_role(account, name, trust_policy, managed_policies):
@@ -341,18 +352,19 @@ def create_project_profile(account, region, invitee_account_id, governance_accou
     click.echo(f"    ✅ Created project profile {profile_name} in the domain {domain_id}.")
 
 
-@click.command()
-@click.option('--domain-id', required=False, help='Domain ID to invite the account to (optional)')
-@click.option('--domain-name', required=False, help='Domain name to invite the account to (alternative to domain-id)')
-@click.option('--account', required=True, help='AWS account profile to use')
-@click.option('--template', required=True, help='Template to be used to configure the project profile')
-def invite_account(domain_id, domain_name, account, template):
+@accounts.command(name='invite')
+@click.option('--domain-id', required=False, help='The ID of the domain')
+@click.option('--domain-name', help='The name of the domain (alternative to domain-id)')
+@click.option('--account', required=True, help='The AWS account profile name to invite')
+@click.option('--template', default='default', help='Template to use for project profile')
+def invite(domain_id, domain_name, account, template):
     """Invite an AWS account to join DataZone domains.
     
     This command helps manage AWS account invitations to DataZone domains.
     
     Example:
-        sm invite-account --domain-name marc_test --account dev
+        sm accounts invite --domain-name my-domain --account dev
+        sm accounts invite --domain-id dzd_xxxxxxxxx --account test --template custom
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)
@@ -390,18 +402,19 @@ def invite_account(domain_id, domain_name, account, template):
         click.get_current_context().exit(1)
 
 
-@click.command()
-@click.option('--domain-id', required=False, help='Domain ID to uninvite the account from (optional)')
-@click.option('--domain-name', required=False, help='Domain name to uninvite the account from (alternative to domain-id)')
-@click.option('--account', required=True, help='AWS account profile to uninvite')
-@click.option('--force', is_flag=True, default=False, help='Skip confirmation prompt')
-def uninvite_account(domain_id, domain_name, account, force):
+@accounts.command(name='uninvite')
+@click.option('--domain-id', required=False, help='The ID of the domain')
+@click.option('--domain-name', help='The name of the domain (alternative to domain-id)')
+@click.option('--account', required=True, help='The AWS account profile name to uninvite')
+@click.option('--force', is_flag=True, help='Skip confirmation prompt')
+def uninvite(domain_id, domain_name, account, force):
     """Uninvite an AWS account from DataZone domains by removing its resource shares.
     
     This command removes the resource shares that grant the specified account access to the domain.
     
     Example:
-        sm uninvite-account --domain-name marc_test --account dev
+        sm accounts uninvite --domain-name my-domain --account dev
+        sm accounts uninvite --domain-id dzd_xxxxxxxxx --account test --force
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)

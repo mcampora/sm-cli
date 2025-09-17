@@ -53,45 +53,67 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 - **List Domains**
   List all SageMaker domains in the current region.
   ```bash
-  sm list-domains
+  sm domains list
   ```
 
 - **Describe Domain**
   Show detailed information about a specific domain.
   ```bash
-  sm describe-domain --domain-name <domain_name>
+  sm domains describe --name <domain_name>
+  # or by ID
+  sm domains describe --id <domain_id>
   ```
 
 - **Create Domain**
-  Create a new SageMaker domain.
+  Create a new SageMaker domain using a manifest file.
   ```bash
-  sm create-domain --manifest <config_file>
+  sm domains create --manifest <config_file>
   ```
 
 - **Delete Domain**
-  Delete an existing SageMaker domain.
+  Delete an existing SageMaker domain and its resources.
   ```bash
-  sm delete-domain --domain-name <domain_name> --force
+  sm domains delete --name <domain_name> --force
+  # or by ID
+  sm domains delete --id <domain_id> --force
   ```
 
 ### Account Management
 
 - **List Accounts**
-  List all accounts in the organization.
+  List all accounts in a domain.
   ```bash
-  sm list-accounts
+  sm accounts list --domain-name <domain_name>
+  # or by domain ID
+  sm accounts list --domain-id <domain_id>
   ```
 
 - **Invite Account**
-  Invite an AWS account to the organization.
+  Invite an AWS account to a domain.
   ```bash
-  sm invite-account --domain-name <domain_name> --account <profiel_namne>
+  sm accounts invite --domain-name <domain_name> --account <profile_name>
+  # with custom template
+  sm accounts invite --domain-id <domain_id> --account test --template custom
   ```
 
 - **Uninvite Account**
-  Remove an account invitation.
+  Remove an account from a domain.
   ```bash
-  sm uninvite-account --domain-name <domain_name> --account <profile_name>
+  sm accounts uninvite --domain-name <domain_name> --account <profile_name>
+  # force uninvite without confirmation
+  sm accounts uninvite --domain-id <domain_id> --account test --force
+  ```
+
+- **List Blueprints**
+  List all blueprints in a domain.
+  ```bash
+  sm accounts list-blueprints --domain-name <domain_name> --account <profile_name>
+  ```
+
+- **Describe Blueprint**
+  Show details of a specific blueprint.
+  ```bash
+  sm accounts describe-blueprint --domain-name <domain_name> --account <profile_name> --name <blueprint_name>
   ```
 
 ### Project Management
@@ -99,33 +121,25 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 - **List Projects**
   List all projects in a domain.
   ```bash
-  sm list-projects --domain-name <domain_name>
+  sm projects list --domain-name <domain_name>
+  # or by domain ID
+  sm projects list --domain-id <domain_id>
   ```
 
 - **Create Project**
-  Create a new project.
+  Create a new project in a domain.
   ```bash
-  sm create-project --domain-name <domain_name> --name <name> --account <profile_name>
+  sm projects create --domain-name <domain_name> --name <project_name> --account <profile_name>
+  # with custom template
+  sm projects create --domain-id <domain_id> --name project_name --account dev --template custom.json
   ```
 
 - **Delete Project**
-  Delete a project.
+  Delete a project from a domain.
   ```bash
-  sm delete-project --domain-name <domain_name> --name <name> --force
-  ```
-
-### Blueprint Management
-
-- **List Blueprints**
-  List all available blueprints.
-  ```bash
-  sm list-blueprints --domain-name <domain_name>
-  ```
-
-- **Describe Blueprint**
-  Display detailed information about a specific blueprint configuration.
-  ```bash
-  sm describe-blueprint --domain-name <domain_name> --name <blueprint_name>
+  sm projects delete --domain-name <domain_name> --name <project_name>
+  # force delete without confirmation
+  sm projects delete --domain-id <domain_id> --name project_name --force
   ```
 
 ### Utility Commands
@@ -156,6 +170,20 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
   sm status
   # With custom profile
   sm status --account dev
+
+### Getting Help
+
+For detailed help on any command, use the `--help` flag:
+
+```bash
+# Show all available commands
+sm --help
+
+# Show help for domains commands
+sm domains --help
+
+# Show help for a specific command
+sm domains create --help
   ```
 
 ## Current limitations or required improvements

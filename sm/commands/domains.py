@@ -4,9 +4,14 @@ from pprint import pformat
 import json
 from sm.commands.utils import get_domain_id, delete_resource_shares, list_all_projects, delete_project_profile
 
-@click.command()
+@click.group()
+def domains():
+    """Manage DataZone domains"""
+    pass
+
+@domains.command(name='list')
 def list_domains():
-    """List SageMaker domains in the current AWS account with details."""
+    """List all DataZone domains in the current AWS account."""
     try:
         datazone = boto3.client('datazone')
         domains = datazone.list_domains()['items']
@@ -29,21 +34,23 @@ def list_domains():
         click.echo(f"❌ Error listing SageMaker domains: {str(e)}", err=True)
         click.get_current_context().exit(1)
 
-@click.command()
+@domains.command(name='describe')
 @click.option('--id', required=False, help='The ID of the domain to describe')
 @click.option('--name', required=False, help='The Name of the domain to describe')
-def describe_domain(id, name):
-    """
-    Display detailed information about a specific domain.
-    Return a JSON document.
-
+def describe(id, name):
+    """Display detailed information about a specific domain.
+    
     Example:
-        sm describe-domain --id dzd_4s9s40qvcqalpj
+        sm domains describe --id dzd_4s9s40qvcqalpj
+        sm domains describe --name my-domain
     """
     try:
         datazone = boto3.client('datazone')
         result = {}
         domain_id = get_domain_id(name, id)
+        if not domain_id:
+            click.echo("❌ Either --id or --name must be provided", err=True)
+            click.get_current_context().exit(1)
 
         # Get domain details
         domain = datazone.get_domain(identifier=domain_id)
@@ -122,13 +129,13 @@ def describe_domain(id, name):
         click.echo(f"❌ Error describing domain {domain_id}: {str(e)}", err=True)
         click.get_current_context().exit(1)
 
-@click.command()
+@domains.command(name='create')
 @click.option('--manifest', required=True, help='Name of the file describing the domain to create')
-def create_domain(manifest):
+def create(manifest):
     """Create a new DataZone domain with the specified parameters.
     
     Example:
-        sm create-domain --manifest marc_test.json
+        sm domains create --manifest domain_config.json
     """
     try:
         datazone = boto3.client('datazone')
@@ -196,21 +203,25 @@ def create_domain(manifest):
         click.echo(f"❌ Error creating domain: {str(e)}", err=True)
         click.get_current_context().exit(1)
 
-@click.command()
+@domains.command(name='delete')
 @click.option('--id', 'domain_id', required=False, help='ID of the domain to delete')
 @click.option('--name', 'domain_name', required=False, help='The Name of the domain to delete')
 @click.option('--force', is_flag=True, help='Skip confirmation prompt')
-def delete_domain(domain_id, domain_name, force):
+def delete(domain_id, domain_name, force):
     """Delete a DataZone domain and its associated resources.
     
     This will permanently delete the domain and all its associated resources.
     Use with caution as this action cannot be undone.
     
     Example:
-        sm delete-domain --id dzd_xxxxxxxxx
+        sm domains delete --id dzd_xxxxxxxxx
+        sm domains delete --name my-domain --force
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)
+        if not domain_id:
+            click.echo("❌ Either --id or --name must be provided", err=True)
+            click.get_current_context().exit(1)
 
         datazone = boto3.client('datazone')
         
@@ -246,3 +257,8 @@ def delete_domain(domain_id, domain_name, force):
     except Exception as e:
         click.echo(f"❌ Error deleting domain: {str(e)}", err=True)
         click.get_current_context().exit(1)
+
+def register_commands(cli):
+    """Register domain commands with the main CLI"""
+    cli.add_command(domains)
+
