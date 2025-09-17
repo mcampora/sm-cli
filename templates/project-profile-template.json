@@ -11,7 +11,7 @@
                 {
                     "isEditable": true,
                     "name": "gitConnectionArn",
-                    "value": "arn:aws:codeconnections:us-east-1:555456986422:connection/66e6b9ef-a2db-4309-9654-95f2c8f7094f"
+                    "value": "arn:aws:codeconnections:us-east-1:123456789012:connection/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx"
                 }
             ]
         },

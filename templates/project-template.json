@@ -1,5 +1,5 @@
 {   
-    "owner": "mcampora@ebsco.com",
+    "owner": "foo@gmail.com",
     "description": "",
     "domainIdentifier": "${DOMAIN_ID}",
     "domainUnitId": "${DOMAIN_UNIT_ID}",
@@ -19,7 +19,7 @@
                 },
                 {
                     "name": "gitFullRepositoryId",
-                    "value": "EBSCOIS-SANDBOX/test_custom_repo"
+                    "value": "MYORG/test_custom_repo"
                 }
             ]
         },

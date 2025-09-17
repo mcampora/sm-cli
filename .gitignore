@@ -1,3 +1,6 @@
+# EBSCO specific templates
+templates/ebsco*
+
 # Environment variables
 .env
 .env.*
