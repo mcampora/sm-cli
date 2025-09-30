@@ -74,6 +74,31 @@ def delete_project_profile(account, domain_id):
     if not found:
         click.echo(f"    ✅ Project profile not found in the domain {domain_id} and account {account}.")
 
+def get_project(domain_id, project_id):
+    datazone = boto3.client('datazone')
+    result = datazone.get_project(domainIdentifier=domain_id, identifier=project_id)
+    del result['ResponseMetadata']
+
+    response = datazone.list_environments(
+        domainIdentifier=domain_id,
+        projectIdentifier=project_id,
+    )
+    result['_environments'] = response['items']
+    for environment in result['_environments']:
+        environment['_details'] = datazone.get_environment(domainIdentifier=domain_id, identifier=environment['id'])
+        del environment['_details']['ResponseMetadata']
+
+    response = datazone.list_project_memberships(
+        domainIdentifier=domain_id,
+        projectIdentifier=project_id,
+    )
+    result['_project_memberships'] = response['members']
+    for user in result['_project_memberships']:
+        user_id = user['memberDetails']['user']
+        user_details = datazone.get_user_profile(domainIdentifier=domain_id, userIdentifier=user_id['userId'], type='SSO')['details']
+        user_id['_user_details'] = user_details
+    return result
+
 def list_all_projects(domain_id):
     datazone = boto3.client('datazone')
     response = datazone.list_projects(

@@ -26,9 +26,24 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
    source venv/bin/activate
    ```
 
-3. Install the package in development mode:
+3. Install the build tools
+  ```bash
+  python3 -m pip install setuptools wheel build   
+  ```
+
+4. Install the package in development mode:
    ```bash
    pip install -e .
+   ```
+
+5. Build the package
+   ```bash
+   python3 -m build
+   ```
+
+6. Install the package in production mode
+   ```bash
+   pip install dist/sm_cli-0.1.0-py3-none-any.whl
    ```
 
 ## Configuration
@@ -126,6 +141,15 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
   sm projects list --domain-id <domain_id>
   ```
 
+- **Get Project Details**
+  Get detailed information about a specific project as JSON.
+  ```bash
+  sm projects describe --domain-name <domain_name> --name <project_name>
+  # or by domain ID
+  sm projects describe --domain-id <domain_id> --name <project_name>
+  ```
+  The output is formatted as pretty-printed JSON by default.
+
 - **Create Project**
   Create a new project in a domain.
   ```bash
@@ -142,34 +166,46 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
   sm projects delete --domain-id <domain_id> --name project_name --force
   ```
 
+### Asset Management
+
+- **Grant Access**
+  Grant access to a DataZone asset.
+  ```bash
+  sm assets grant-access --domain-name <domain_name> --asset-id <asset_id> --grantee-id <user_or_group_id>
+  ```
+
+### Workflow Management
+
+- **Describe Workflow Environment**
+  Get workflow environment details for a specific project.
+  ```bash
+  sm workflows describe --domain-name <domain_name> --name <project_name>
+  # or by domain ID
+  sm workflows describe --domain-id <domain_id> --name <project_name>
+  ```
+  The output includes provisioned resources and other workflow environment details in JSON format.
+
+- **List DAGs**
+  List all DAGs in a project's workflow environment.
+  ```bash
+  sm workflows list-dags --domain-name <domain_name> --name <project_name>
+  # or by domain ID
+  sm workflows list-dags --domain-id <domain_id> --name <project_name>
+  ```
+
 ### Utility Commands
 
 - **Status**
   Show the current status of the CLI and AWS configuration.
   ```bash
-  sm status
+  sm status --account dev
   ```
 
 - **Help**
   Show help message and usage information.
   ```bash
-  sm --help
-  ```
-
-### Utility Commands
-
-- **Show help**
-  ```bash
-  sm --help
-  # or
   sm help
   ```
-
-- **Check AWS connection status**
-  ```bash
-  sm status
-  # With custom profile
-  sm status --account dev
 
 ### Getting Help
 

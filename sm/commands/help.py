@@ -16,6 +16,8 @@ def help():
     click.echo("  domains           Manage DataZone domains")
     click.echo("  accounts          Manage AWS accounts in DataZone domains")
     click.echo("  projects          Manage DataZone projects")
+    click.echo("  workflows         Manage workflow environments")
+    click.echo("  assets            Manage DataZone assets")
     
     click.echo("\nDomains Commands:")
     click.echo("  domains list      List domains in the current AWS account.")
@@ -31,7 +33,15 @@ def help():
     click.echo("  accounts describe-blueprint Show details of a specific blueprint.")
     
     click.echo("\nProjects Commands:")
-    click.echo("  projects list      List projects in a domain.")
-    click.echo("  projects create    Create a new project in a domain.")
-    click.echo("  projects delete    Delete a project from a domain.")
+    click.echo("  projects list          List projects in a domain.")
+    click.echo("  projects create        Create a new project in a domain.")
+    click.echo("  projects describe      Get details of a specific project.")
+    click.echo("  projects delete        Delete a project from a domain.")
+    
+    click.echo("\nWorkflow Commands:")
+    click.echo("  workflows describe      Get workflow environment details for a project")
+    click.echo("  workflows list-dags     List DAGs in a project's workflow environment")
+
+    click.echo("\nAsset Commands:")
+    click.echo("  assets grant-access   Grant access to a DataZone asset")
     

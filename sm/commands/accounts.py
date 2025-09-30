@@ -356,7 +356,7 @@ def create_project_profile(account, region, invitee_account_id, governance_accou
 @click.option('--domain-id', required=False, help='The ID of the domain')
 @click.option('--domain-name', help='The name of the domain (alternative to domain-id)')
 @click.option('--account', required=True, help='The AWS account profile name to invite')
-@click.option('--template', default='default', help='Template to use for project profile')
+@click.option('--template', required=True, help='Template to use for project profile')
 def invite(domain_id, domain_name, account, template):
     """Invite an AWS account to join DataZone domains.
     

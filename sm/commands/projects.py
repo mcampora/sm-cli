@@ -100,13 +100,72 @@ def create(domain_id, domain_name, name, account, template):
         click.get_current_context().exit(1)
 
 def get_project(domain_id, name):
-    session = boto3.Session(profile_name='default')
-    datazone = session.client('datazone')
     projects = list_all_projects(domain_id)
-    for project in projects:
-        if project['name'] == name:
-            return project['id']
-    raise click.BadParameter(f"Project '{name}' not found in domain '{domain_id}'.")
+    project = None
+    for item in projects:
+        if item['name'] == name:
+            #click.echo(json.dumps(item, indent=2, default=str))
+            project = item
+            break
+    return project
+
+@projects.command(name='describe-workflow-env')
+@click.option('--domain-id', required=False, help='The ID of the domain (optional if --domain-name is provided)')
+@click.option('--domain-name', required=False, help='The name of the domain (optional if --domain-id is provided)')
+@click.option('--name', required=True, help='The name of the project to retrieve')
+def describe_workflow_env(domain_id, domain_name, name):
+    """Get details of a specific project as JSON.
+    
+    The output is formatted as pretty-printed JSON by default.
+    
+    Example:
+        sm projects describe-workflow-env --domain-name my-domain --name project_name
+        sm projects describe-workflow-env --domain-id dzd_xxxxxxxxx --name project_name
+    """
+    try:
+        domain_id = get_domain_id(domain_name, domain_id)        
+        project = get_project(domain_id, name)
+        if not project:
+            raise click.BadParameter(f"Project '{name}' not found in domain '{domain_id}'.")
+        environments = project['_environments']
+        environment = None
+        for item in environments:
+            if item['name'].startswith("workflow"):
+                environment = item
+                break
+        if not environment:
+            raise click.BadParameter(f"Workflow environment not found in project '{name}'.")
+        click.echo(json.dumps(environment['_details']['provisionedResources'], indent=2, default=str))
+
+    except Exception as e:
+        click.echo(f"❌ Error getting project details: {str(e)}", err=True)
+        click.get_current_context().exit(1)
+
+
+@projects.command(name='describe')
+@click.option('--domain-id', required=False, help='The ID of the domain (optional if --domain-name is provided)')
+@click.option('--domain-name', required=False, help='The name of the domain (optional if --domain-id is provided)')
+@click.option('--name', required=True, help='The name of the project to retrieve')
+def describe(domain_id, domain_name, name):
+    """Get details of a specific project as JSON.
+    
+    The output is formatted as pretty-printed JSON by default.
+    
+    Example:
+        sm projects describe --domain-name my-domain --name project_name
+        sm projects describe --domain-id dzd_xxxxxxxxx --name project_name
+    """
+    try:
+        domain_id = get_domain_id(domain_name, domain_id)        
+        project = get_project(domain_id, name)
+        if not project:
+            raise click.BadParameter(f"Project '{name}' not found in domain '{domain_id}'.")        
+        click.echo(json.dumps(project, indent=2, default=str))
+            
+    except Exception as e:
+        click.echo(f"❌ Error getting project details: {str(e)}", err=True)
+        click.get_current_context().exit(1)
+
 
 @projects.command(name='delete')
 @click.option('--domain-id', required=False, help='The ID of the domain (optional if --domain-name is provided)')

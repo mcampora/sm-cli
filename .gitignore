@@ -18,7 +18,7 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+#dist/
 downloads/
 eggs/
 .eggs/
@@ -36,6 +36,7 @@ wheels/
 venv/
 env/
 ENV/
+test_env/
 
 # IDE
 .idea/
