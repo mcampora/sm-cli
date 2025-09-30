@@ -27,9 +27,9 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
    ```
 
 3. Install the build tools
-  ```bash
-  python3 -m pip install setuptools wheel build   
-  ```
+   ```bash
+   python3 -m pip install setuptools wheel build   
+   ```
 
 4. Install the package in development mode:
    ```bash
