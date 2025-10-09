@@ -43,5 +43,6 @@ def help():
     click.echo("  workflows list-dags     List DAGs in a project's workflow environment")
 
     click.echo("\nAsset Commands:")
-    click.echo("  assets grant-access   Grant access to a DataZone asset")
+    click.echo("  assets grant-access   Grant access to an S3 location")
+    click.echo("  assets publish        Publish a data asset in the domain catalog")
     

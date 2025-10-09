@@ -9,9 +9,10 @@ def status(account):
     try:
         click.echo("Checking AWS connection status...")
         if not account:
-            account = "default"
-        session = boto3.Session(profile_name=account)
-        sts = session.client('sts')
+            sts = boto3.client('sts')
+        else:
+            session = boto3.Session(profile_name=account)
+            sts = session.client('sts')
         identity = sts.get_caller_identity()
         click.echo("✅ Successfully connected to AWS")
         click.echo(f"Account: {identity['Account']}")

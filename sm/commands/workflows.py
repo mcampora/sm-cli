@@ -41,22 +41,22 @@ def get_environment_name(domain_id, project_name):
 @workflows.command(name='describe')
 @click.option('--domain-id', required=False, help='The ID of the domain (optional if --domain-name is provided)')
 @click.option('--domain-name', required=False, help='The name of the domain (optional if --domain-id is provided)')
-@click.option('--name', required=True, help='The name of the project to retrieve')
+@click.option('--project-name', required=True, help='The name of the project to retrieve')
 @click.option('--short', is_flag=True, default=False, help='Display only basic environment details')
-def describe(domain_id, domain_name, name, short):
+def describe(domain_id, domain_name, project_name, short):
     """Get workflow environment details for a project.
     
     The output includes workflow-specific environment details in JSON format.
     
     Example:
-        sm workflows describe-env --domain-name my-domain --name project_name
-        sm workflows describe-env --domain-id dzd_xxxxxxxxx --name project_name
+        sm workflows describe-env --domain-name my-domain --project-name project_name
+        sm workflows describe-env --domain-id dzd_xxxxxxxxx --project-name project_name
     """
     try:
         domain_id = get_domain_id(domain_name, domain_id)
-        environment = get_environment(domain_id, name)                
+        environment = get_environment(domain_id, project_name)                
         if not environment:
-            raise click.BadParameter(f"Workflow environment not found in project '{name}'.")
+            raise click.BadParameter(f"Workflow environment not found in project '{project_name}'.")
             
         if short:
             rscs = environment.get('_details', {}).get('provisionedResources', {})
@@ -81,9 +81,11 @@ def list_dags(domain_id, domain_name, project_name, account):
         name = get_environment_name(domain_id, project_name)
         if not name:
             raise click.BadParameter(f"MWAA environment ARN not found in project '{project_name}'.")
-        #click.echo(name)
-        session = boto3.Session(profile_name=account, region_name='us-east-1')
-        client = session.client("mwaa")
+        if account == 'default':
+            client = boto3.client("mwaa", aws_account_id='183631307357')
+        else:
+            session = boto3.Session(profile_name=account, region_name='us-east-1')
+            client = session.client("mwaa")
         request_params = {
             "Name": name,
             "Path": "/dags",
@@ -145,8 +147,11 @@ def run_dag(domain_id, domain_name, project_name, name, account, wait):
         env_name = get_environment_name(domain_id, project_name)                
         if not name:
             raise click.BadParameter(f"MWAA environment ARN not found in project '{name}'.")
-        session = boto3.Session(profile_name=account, region_name='us-east-1')
-        client = session.client("mwaa")
+        if account == 'default':
+            client = boto3.client("mwaa", region_name='us-east-1')
+        else:
+            session = boto3.Session(profile_name=account, region_name='us-east-1')
+            client = session.client("mwaa")
         run_id = trigger_dag(client, env_name, name)
         if wait == True:
             status = wait_for_dag(client, env_name, name, run_id)

@@ -28,6 +28,7 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 
 3. Install the build tools
    ```bash
+   pip install --upgrade pip
    python3 -m pip install setuptools wheel build   
    ```
 
@@ -169,9 +170,15 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
 ### Asset Management
 
 - **Grant Access**
-  Grant access to a DataZone asset.
+  Grant a project access to an S3 location.
   ```bash
-  sm assets grant-access --domain-name <domain_name> --asset-id <asset_id> --grantee-id <user_or_group_id>
+  sm assets grant-access --domain-name <domain_name> --location s3://your-bucket/path/ --project-name <project_name>
+  ```
+
+- **Publish Asset**
+  Publish a data asset in DataZone.
+  ```bash
+  sm assets publish --domain-name <domain_name> --project-name <project_name> --asset-name <asset_name>
   ```
 
 ### Workflow Management
