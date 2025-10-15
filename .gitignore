@@ -47,3 +47,4 @@ test_env/
 # Local development
 .python-version
 marc_basic_test.json
+.DS_Store

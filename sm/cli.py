@@ -14,7 +14,7 @@ from sm.commands.assets import register_commands as register_assets_commands
 def main():
     """SM Setup - AWS Resource Management CLI Tool."""
     os.environ['AWS_SHARED_CREDENTIALS_FILE'] = './credentials'
-    #boto3.setup_default_session(profile_name='default')
+    boto3.setup_default_session(profile_name='default', region_name='us-east-1')
 
 # Register command groups
 register_domains_commands(main)
