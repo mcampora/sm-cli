@@ -231,6 +231,7 @@ sm domains create --help
 
 ## Current limitations or required improvements
 - delete-project command returns immediately, the project deletion can take up to 5 minutes. You cannot use the uninvite-account or delete-domain commands until the project is deleted.
+- delete-project is not cleaning up its associated Glue database, current configuration use a fixed name derived from the project name, if you recreate a project with the same name it will fail. 
 - create-domain assumes that SageMaker provisioning and execution roles exist in the governance account.
 
 ## License
