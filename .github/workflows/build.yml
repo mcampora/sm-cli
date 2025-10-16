@@ -17,7 +17,7 @@ jobs:
         run: |
           python3 -m build
     
-      - name: Upload package
+      - name: Upload package and helper scripts
         run: |
           aws s3 cp dist/sm_cli-0.1.0-py3-none-any.whl s3://marc-tests-us-east-1-9514-7953-3181/packages/
           aws s3 sync temporary-credentials/get-credentials/get-credentials.py s3://marc-tests-us-east-1-9514-7953-3181/packages/
