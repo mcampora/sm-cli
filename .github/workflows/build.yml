@@ -5,4 +5,19 @@ jobs:
     runs-on:
       - codebuild-sm_cli_repo-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
-      - run: echo "Hello World!"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          python3 -m pip install setuptools wheel build   
+
+      - name: Build package
+        run: |
+          python3 -m build
+    
+      - name: Upload package
+        run: |
+          # dist/sm_cli-0.1.0-py3-none-any.whl
+          # s3://marc-test-555456986422-us-east-1/packages/
