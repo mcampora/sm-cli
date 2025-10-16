@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template to create an IAM role with trust policy for another role and S3 list permissions'
+
+Parameters:
+  RoleName:
+    Type: String
+    Description: Name of the IAM role to create
+    MinLength: 1
+    MaxLength: 64
+    AllowedPattern: '[\w+=,.@-]+'
+    ConstraintDescription: Must be a valid IAM role name
+    
+  TrustedRoleArn:
+    Type: String
+    Description: ARN of the role that is allowed to assume this role
+    AllowedPattern: 'arn:aws:iam::\d{12}:role/[\w+=,.@/-]+'
+    ConstraintDescription: Must be a valid IAM role ARN
+
+Resources:
+  AssumeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      Description: !Sub 'Role that can be assumed by ${TrustedRoleArn}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref TrustedRoleArn
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: AssumePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                  - 'sts:AssumeRole'
+                  - 'datazone:*'
+                  - 'MWAA:*'
+                Resource: '*'
+      Tags:
+        - Key: ManagedBy
+          Value: CloudFormation
+        - Key: Purpose
+          Value: AssumeRoleTesting
+
+Outputs:
+  RoleArn:
+    Description: ARN of the created IAM role
+    Value: !GetAtt AssumeRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-RoleArn'
+      
+  RoleName:
+    Description: Name of the created IAM role
+    Value: !Ref RoleName
+    Export:
+      Name: !Sub '${AWS::StackName}-RoleName'
