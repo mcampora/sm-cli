@@ -3,7 +3,7 @@ on: [push]
 jobs:
   SM_CLI_build:
     runs-on:
-      - codebuild-sm_cli_repo-${{ github.run_id }}-${{ github.run_attempt }}
+      - codebuild-sm_cli-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,3 +21,4 @@ jobs:
         run: |
           aws s3 cp dist/sm_cli-0.1.0-py3-none-any.whl s3://marc-tests-us-east-1-9514-7953-3181/packages/
           aws s3 sync temporary-credentials/get-credentials/get-credentials.py s3://marc-tests-us-east-1-9514-7953-3181/packages/
+          
