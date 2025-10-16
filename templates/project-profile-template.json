@@ -28,15 +28,6 @@
         "awsRegion": {
             "regionName": "${AWS_REGION}"
         },
-        "configurationParameters": {
-            "parameterOverrides": [
-                {
-                    "isEditable": true,
-                    "name": "glueDbName",
-                    "value": "custom_glue_db"
-                }
-            ]
-        },
         "deploymentMode": "ON_CREATE",
         "deploymentOrder": 1,
         "description": "Creates databases in Amazon SageMaker Lakehouse for storing tables in S3 and Amazon Athena resources for your SQL workloads",

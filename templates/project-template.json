@@ -24,13 +24,7 @@
             ]
         },
         {
-            "environmentConfigurationName": "Lakehouse Database",
-            "environmentParameters": [
-                {
-                    "name": "glueDbName",
-                    "value": "${ACCOUNT}_${PROJECT_NAME}_glue_db"
-                }
-            ]
+            "environmentConfigurationName": "Lakehouse Database"
         }
     ]
 }
