@@ -1,0 +1,8 @@
+name: SM CLI Build
+on: [push]
+jobs:
+  SM_CLI_build:
+    runs-on:
+      - codebuild-sm_cli_repo-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - run: echo "Hello World"
