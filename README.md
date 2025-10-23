@@ -1,15 +1,11 @@
 # SageMaker Unified Studio CLI
 
-A command-line interface (CLI) tool to simplify the creation and management of AWS resources.  
+A command-line interface (CLI) tool to simplify the creation and management of AWS SageMaker Unified Studio resources.  
 
-I was able to create a domain, invite accounts to this domain (ie. dev, test, prod), activate blueprints in these accounts, discover the settings coming with these blueprints, create a project profile with custom settings (ex. the GitHub organization), create projects with custom parameters (ex. the associated GitHub repo).
+Using this tool, I was able to create a domain, invite accounts to this domain (ie. dev, test, prod), activate blueprints in these accounts (ie. tooling, LakeHouse, Workflow), discover the settings coming with these blueprints, create a project profile with custom settings (ex. the GitHub organization), create projects with custom parameters (ex. the associated GitHub repo).
+Ultimately the goal of this POC was to illustrate how to manage the lifecycle of a given transformation pipeline (from development to production). 
 
-Ultimately the goal of this POC is to illustrate how to manage the lifecycle of a given pipeline (from development to production). 
-
-## Features
-
-- Simple CLI interface for AWS resource management
-- Secure credential handling using a local credentials file
+A GitHub Actions workflow is building a wheel and publishing it to an S3 bucket.
 
 ## Installation
 
@@ -56,8 +52,8 @@ Ultimately the goal of this POC is to illustrate how to manage the lifecycle of 
    aws_secret_access_key=...
    aws_session_token=...
    ```
-   You need to at least define the default profile.  
-   3 additional profiles are available to create a data mesh with 4 accounts:
+   You need to at least define the default profile (the governance account).  
+   You can define 3 additional profiles to create a data mesh with 4 accounts:
    - dev
    - test
    - prod
@@ -231,8 +227,10 @@ sm domains create --help
 
 ## Current limitations or required improvements
 - delete-project command returns immediately, the project deletion can take up to 5 minutes. You cannot use the uninvite-account or delete-domain commands until the project is deleted.
-- delete-project is not cleaning up its associated Glue database, current configuration use a fixed name derived from the project name, if you recreate a project with the same name it will fail. 
+- delete-project is not cleaning up its associated Glue database.
 - create-domain assumes that SageMaker provisioning and execution roles exist in the governance account.
+- grant-access command is not implemented yet.
+- publish command is not implemented yet.
 
 ## License
 
