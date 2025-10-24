@@ -38,9 +38,9 @@ A GitHub Actions workflow is building a wheel and publishing it to an S3 bucket.
    python3 -m build
    ```
 
-6. Install the package in production mode
+6. Install the package from anywhere
    ```bash
-   pip install dist/sm_cli-0.1.0-py3-none-any.whl
+   pip install git+https://github.com/EBSCOIS/sm-cli.git
    ```
 
 ## Configuration
