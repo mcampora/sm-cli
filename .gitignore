@@ -48,3 +48,5 @@ test_env/
 .python-version
 marc_basic_test.json
 .DS_Store
+
+*.arn
