@@ -50,3 +50,4 @@ marc_basic_test.json
 .DS_Store
 
 **/*.arn
+user.py
