@@ -183,7 +183,8 @@ def delete(domain_id, domain_name, name, force):
         session = boto3.Session(profile_name='default')
         datazone = session.client('datazone')
         domain_id = get_domain_id(domain_name, domain_id)
-        project_id = get_project(domain_id, name)
+        project = get_project(domain_id, name)
+        project_id = project['id']
 
         click.echo(f"\n⚠️  WARNING: You are about to delete the following project:")
         click.echo(f"   Name: {name}")
